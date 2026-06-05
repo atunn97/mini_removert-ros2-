@@ -97,16 +97,48 @@ CMakeFiles/mini_removert.dir/src/transform/transform.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/mini_removert.dir/src/transform/transform.cpp.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/atun/mini_removert/src/transform/transform.cpp -o CMakeFiles/mini_removert.dir/src/transform/transform.cpp.s
 
+CMakeFiles/mini_removert.dir/src/range_image/range_image.cpp.o: CMakeFiles/mini_removert.dir/flags.make
+CMakeFiles/mini_removert.dir/src/range_image/range_image.cpp.o: /home/atun/mini_removert/src/range_image/range_image.cpp
+CMakeFiles/mini_removert.dir/src/range_image/range_image.cpp.o: CMakeFiles/mini_removert.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/atun/mini_removert/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/mini_removert.dir/src/range_image/range_image.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/mini_removert.dir/src/range_image/range_image.cpp.o -MF CMakeFiles/mini_removert.dir/src/range_image/range_image.cpp.o.d -o CMakeFiles/mini_removert.dir/src/range_image/range_image.cpp.o -c /home/atun/mini_removert/src/range_image/range_image.cpp
+
+CMakeFiles/mini_removert.dir/src/range_image/range_image.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/mini_removert.dir/src/range_image/range_image.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/atun/mini_removert/src/range_image/range_image.cpp > CMakeFiles/mini_removert.dir/src/range_image/range_image.cpp.i
+
+CMakeFiles/mini_removert.dir/src/range_image/range_image.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/mini_removert.dir/src/range_image/range_image.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/atun/mini_removert/src/range_image/range_image.cpp -o CMakeFiles/mini_removert.dir/src/range_image/range_image.cpp.s
+
+CMakeFiles/mini_removert.dir/src/discrepancy/discrepancy.cpp.o: CMakeFiles/mini_removert.dir/flags.make
+CMakeFiles/mini_removert.dir/src/discrepancy/discrepancy.cpp.o: /home/atun/mini_removert/src/discrepancy/discrepancy.cpp
+CMakeFiles/mini_removert.dir/src/discrepancy/discrepancy.cpp.o: CMakeFiles/mini_removert.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/atun/mini_removert/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/mini_removert.dir/src/discrepancy/discrepancy.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/mini_removert.dir/src/discrepancy/discrepancy.cpp.o -MF CMakeFiles/mini_removert.dir/src/discrepancy/discrepancy.cpp.o.d -o CMakeFiles/mini_removert.dir/src/discrepancy/discrepancy.cpp.o -c /home/atun/mini_removert/src/discrepancy/discrepancy.cpp
+
+CMakeFiles/mini_removert.dir/src/discrepancy/discrepancy.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/mini_removert.dir/src/discrepancy/discrepancy.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/atun/mini_removert/src/discrepancy/discrepancy.cpp > CMakeFiles/mini_removert.dir/src/discrepancy/discrepancy.cpp.i
+
+CMakeFiles/mini_removert.dir/src/discrepancy/discrepancy.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/mini_removert.dir/src/discrepancy/discrepancy.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/atun/mini_removert/src/discrepancy/discrepancy.cpp -o CMakeFiles/mini_removert.dir/src/discrepancy/discrepancy.cpp.s
+
 # Object files for target mini_removert
 mini_removert_OBJECTS = \
 "CMakeFiles/mini_removert.dir/src/main.cpp.o" \
-"CMakeFiles/mini_removert.dir/src/transform/transform.cpp.o"
+"CMakeFiles/mini_removert.dir/src/transform/transform.cpp.o" \
+"CMakeFiles/mini_removert.dir/src/range_image/range_image.cpp.o" \
+"CMakeFiles/mini_removert.dir/src/discrepancy/discrepancy.cpp.o"
 
 # External object files for target mini_removert
 mini_removert_EXTERNAL_OBJECTS =
 
 mini_removert: CMakeFiles/mini_removert.dir/src/main.cpp.o
 mini_removert: CMakeFiles/mini_removert.dir/src/transform/transform.cpp.o
+mini_removert: CMakeFiles/mini_removert.dir/src/range_image/range_image.cpp.o
+mini_removert: CMakeFiles/mini_removert.dir/src/discrepancy/discrepancy.cpp.o
 mini_removert: CMakeFiles/mini_removert.dir/build.make
 mini_removert: /usr/lib/x86_64-linux-gnu/libpcl_io.so
 mini_removert: /usr/lib/libOpenNI.so
@@ -173,7 +205,7 @@ mini_removert: /usr/lib/x86_64-linux-gnu/libz.so
 mini_removert: /usr/lib/gcc/x86_64-linux-gnu/13/libgomp.so
 mini_removert: /usr/lib/x86_64-linux-gnu/libpthread.a
 mini_removert: CMakeFiles/mini_removert.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/atun/mini_removert/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Linking CXX executable mini_removert"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/atun/mini_removert/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Linking CXX executable mini_removert"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/mini_removert.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

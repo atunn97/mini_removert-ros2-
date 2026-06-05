@@ -13,8 +13,13 @@ add_definitions(${PCL_DEFINITIONS})
 add_executable(mini_removert
     src/main.cpp
     src/transform/transform.cpp
+    src/range_image/range_image.cpp
+    src/discrepancy/discrepancy.cpp
 )
 
-target_include_directories(mini_removert PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_include_directories(mini_removert PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/include
+)
 
 target_link_libraries(mini_removert PRIVATE ${PCL_LIBRARIES})

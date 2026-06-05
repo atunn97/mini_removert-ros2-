@@ -129,6 +129,30 @@ mini_removert/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini_removert.dir/build.make CMakeFiles/mini_removert.dir/build
 .PHONY : mini_removert/fast
 
+src/discrepancy/discrepancy.o: src/discrepancy/discrepancy.cpp.o
+.PHONY : src/discrepancy/discrepancy.o
+
+# target to build an object file
+src/discrepancy/discrepancy.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini_removert.dir/build.make CMakeFiles/mini_removert.dir/src/discrepancy/discrepancy.cpp.o
+.PHONY : src/discrepancy/discrepancy.cpp.o
+
+src/discrepancy/discrepancy.i: src/discrepancy/discrepancy.cpp.i
+.PHONY : src/discrepancy/discrepancy.i
+
+# target to preprocess a source file
+src/discrepancy/discrepancy.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini_removert.dir/build.make CMakeFiles/mini_removert.dir/src/discrepancy/discrepancy.cpp.i
+.PHONY : src/discrepancy/discrepancy.cpp.i
+
+src/discrepancy/discrepancy.s: src/discrepancy/discrepancy.cpp.s
+.PHONY : src/discrepancy/discrepancy.s
+
+# target to generate assembly for a file
+src/discrepancy/discrepancy.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini_removert.dir/build.make CMakeFiles/mini_removert.dir/src/discrepancy/discrepancy.cpp.s
+.PHONY : src/discrepancy/discrepancy.cpp.s
+
 src/main.o: src/main.cpp.o
 .PHONY : src/main.o
 
@@ -152,6 +176,30 @@ src/main.s: src/main.cpp.s
 src/main.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini_removert.dir/build.make CMakeFiles/mini_removert.dir/src/main.cpp.s
 .PHONY : src/main.cpp.s
+
+src/range_image/range_image.o: src/range_image/range_image.cpp.o
+.PHONY : src/range_image/range_image.o
+
+# target to build an object file
+src/range_image/range_image.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini_removert.dir/build.make CMakeFiles/mini_removert.dir/src/range_image/range_image.cpp.o
+.PHONY : src/range_image/range_image.cpp.o
+
+src/range_image/range_image.i: src/range_image/range_image.cpp.i
+.PHONY : src/range_image/range_image.i
+
+# target to preprocess a source file
+src/range_image/range_image.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini_removert.dir/build.make CMakeFiles/mini_removert.dir/src/range_image/range_image.cpp.i
+.PHONY : src/range_image/range_image.cpp.i
+
+src/range_image/range_image.s: src/range_image/range_image.cpp.s
+.PHONY : src/range_image/range_image.s
+
+# target to generate assembly for a file
+src/range_image/range_image.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini_removert.dir/build.make CMakeFiles/mini_removert.dir/src/range_image/range_image.cpp.s
+.PHONY : src/range_image/range_image.cpp.s
 
 src/transform/transform.o: src/transform/transform.cpp.o
 .PHONY : src/transform/transform.o
@@ -186,9 +234,15 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... mini_removert"
+	@echo "... src/discrepancy/discrepancy.o"
+	@echo "... src/discrepancy/discrepancy.i"
+	@echo "... src/discrepancy/discrepancy.s"
 	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"
+	@echo "... src/range_image/range_image.o"
+	@echo "... src/range_image/range_image.i"
+	@echo "... src/range_image/range_image.s"
 	@echo "... src/transform/transform.o"
 	@echo "... src/transform/transform.i"
 	@echo "... src/transform/transform.s"
