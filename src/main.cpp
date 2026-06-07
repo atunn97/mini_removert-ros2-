@@ -1,5 +1,6 @@
 #include "discrepancy/discrepancy.hpp"
 #include "range_image/range_image.hpp"
+#include "io/pcd_loader.hpp"
 
 #include <cmath>
 #include <iomanip>
@@ -80,6 +81,15 @@ int main()
             }
         }
     }
+    Frame frame =
+        loadFrame(
+            "../data/test.pcd",
+            Eigen::Matrix4f::Identity(),
+            0.0);
+
+    std::cout
+        << frame.cloud->points.size()
+        << std::endl;
 
     std::cout << "scan points: " << scan_cloud->points.size() << '\n';
     std::cout << "map points: " << map_cloud->points.size() << '\n';

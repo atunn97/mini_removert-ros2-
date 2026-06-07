@@ -1170,3 +1170,47 @@ events:
         
       exitCode: 0
 ...
+
+---
+events:
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/usr/share/cmake-3.28/Modules/FindMPI.cmake:1278 (try_compile)"
+      - "/usr/share/cmake-3.28/Modules/FindMPI.cmake:1322 (_MPI_try_staged_settings)"
+      - "/usr/share/cmake-3.28/Modules/FindMPI.cmake:1645 (_MPI_check_lang_works)"
+      - "/usr/lib/x86_64-linux-gnu/cmake/vtk-9.1/VTK-vtk-module-find-packages.cmake:397 (find_package)"
+      - "/usr/lib/x86_64-linux-gnu/cmake/vtk-9.1/vtk-config.cmake:150 (include)"
+      - "/usr/lib/x86_64-linux-gnu/cmake/pcl/PCLConfig.cmake:275 (find_package)"
+      - "/usr/lib/x86_64-linux-gnu/cmake/pcl/PCLConfig.cmake:324 (find_VTK)"
+      - "/usr/lib/x86_64-linux-gnu/cmake/pcl/PCLConfig.cmake:567 (find_external_library)"
+      - "CMakeLists.txt:8 (find_package)"
+    description: "The MPI test test_mpi for C in mode normal"
+    directories:
+      source: "/home/atun/mini_removert/build/CMakeFiles/CMakeScratch/TryCompile-nCGmcX"
+      binary: "/home/atun/mini_removert/build/CMakeFiles/CMakeScratch/TryCompile-nCGmcX"
+    cmakeVariables:
+      CMAKE_C_FLAGS: ""
+      CMAKE_C_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: ""
+      CMAKE_MODULE_PATH: "/usr/lib/x86_64-linux-gnu/cmake/vtk-9.1/patches/99;/usr/lib/x86_64-linux-gnu/cmake/vtk-9.1;/usr/lib/x86_64-linux-gnu/cmake/pcl/Modules"
+    buildResult:
+      variable: "MPI_RESULT_C_test_mpi_normal"
+      cached: true
+      stdout: |
+        Change Dir: '/home/atun/mini_removert/build/CMakeFiles/CMakeScratch/TryCompile-nCGmcX'
+        
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_13130/fast
+        gmake[1]: Entering directory '/home/atun/mini_removert/build/CMakeFiles/CMakeScratch/TryCompile-nCGmcX'
+        /usr/bin/gmake  -f CMakeFiles/cmTC_13130.dir/build.make CMakeFiles/cmTC_13130.dir/build
+        gmake[2]: Entering directory '/home/atun/mini_removert/build/CMakeFiles/CMakeScratch/TryCompile-nCGmcX'
+        Building C object CMakeFiles/cmTC_13130.dir/test_mpi.c.o
+        /usr/bin/cc  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -o CMakeFiles/cmTC_13130.dir/test_mpi.c.o -c /home/atun/mini_removert/build/CMakeFiles/CMakeScratch/TryCompile-nCGmcX/test_mpi.c
+        Linking C executable cmTC_13130
+        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_13130.dir/link.txt --verbose=1
+        /usr/bin/cc -L/usr/lib/x86_64-linux-gnu/openmpi/lib CMakeFiles/cmTC_13130.dir/test_mpi.c.o -o cmTC_13130  /usr/lib/x86_64-linux-gnu/libmpi.so 
+        gmake[2]: Leaving directory '/home/atun/mini_removert/build/CMakeFiles/CMakeScratch/TryCompile-nCGmcX'
+        gmake[1]: Leaving directory '/home/atun/mini_removert/build/CMakeFiles/CMakeScratch/TryCompile-nCGmcX'
+        
+      exitCode: 0
+...

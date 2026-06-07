@@ -15,6 +15,7 @@ add_executable(mini_removert
     src/transform/transform.cpp
     src/range_image/range_image.cpp
     src/discrepancy/discrepancy.cpp
+    src/io/pcd_loader.cpp
 )
 
 target_include_directories(mini_removert PRIVATE
