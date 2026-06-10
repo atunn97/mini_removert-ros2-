@@ -153,6 +153,30 @@ src/discrepancy/discrepancy.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini_removert.dir/build.make CMakeFiles/mini_removert.dir/src/discrepancy/discrepancy.cpp.s
 .PHONY : src/discrepancy/discrepancy.cpp.s
 
+src/filter/filter.o: src/filter/filter.cpp.o
+.PHONY : src/filter/filter.o
+
+# target to build an object file
+src/filter/filter.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini_removert.dir/build.make CMakeFiles/mini_removert.dir/src/filter/filter.cpp.o
+.PHONY : src/filter/filter.cpp.o
+
+src/filter/filter.i: src/filter/filter.cpp.i
+.PHONY : src/filter/filter.i
+
+# target to preprocess a source file
+src/filter/filter.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini_removert.dir/build.make CMakeFiles/mini_removert.dir/src/filter/filter.cpp.i
+.PHONY : src/filter/filter.cpp.i
+
+src/filter/filter.s: src/filter/filter.cpp.s
+.PHONY : src/filter/filter.s
+
+# target to generate assembly for a file
+src/filter/filter.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini_removert.dir/build.make CMakeFiles/mini_removert.dir/src/filter/filter.cpp.s
+.PHONY : src/filter/filter.cpp.s
+
 src/io/pcd_loader.o: src/io/pcd_loader.cpp.o
 .PHONY : src/io/pcd_loader.o
 
@@ -261,6 +285,9 @@ help:
 	@echo "... src/discrepancy/discrepancy.o"
 	@echo "... src/discrepancy/discrepancy.i"
 	@echo "... src/discrepancy/discrepancy.s"
+	@echo "... src/filter/filter.o"
+	@echo "... src/filter/filter.i"
+	@echo "... src/filter/filter.s"
 	@echo "... src/io/pcd_loader.o"
 	@echo "... src/io/pcd_loader.i"
 	@echo "... src/io/pcd_loader.s"

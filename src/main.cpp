@@ -1,7 +1,7 @@
 #include "discrepancy/discrepancy.hpp"
 #include "range_image/range_image.hpp"
 #include "io/pcd_loader.hpp"
-
+#include "filter/filter.hpp"
 #include <cmath>
 #include <iomanip>
 #include <iostream>
@@ -45,6 +45,7 @@ int main()
 
     map_cloud->points.push_back(map_p1);
     map_cloud->points.push_back(map_p2);
+    
     constexpr int height = 16;
     constexpr int width = 32;
     constexpr float vertical_fov_deg = 60.0f;
@@ -85,9 +86,18 @@ int main()
             }
         }
     }
+     auto dynamic_indices = filter::getDynamicIndices(
+        scan_cloud,
+        discrepancy_image,                              // ← cái này mới đúng
+        height, width, vertical_fov_deg);
+    pcl::PointCloud<PointT>::Ptr static_cloud(new pcl::PointCloud<PointT>);
+    pcl::PointCloud<PointT>::Ptr dynamic_cloud(new pcl::PointCloud<PointT>);   
+
+    filter::splitCloud(scan_cloud, dynamic_indices, static_cloud, dynamic_cloud);
     std::cout << "scan points: " << scan_cloud->points.size() << '\n';
     std::cout << "map points: " << map_cloud->points.size() << '\n';
     std::cout << "discrepancy count: " << diff_count << '\n';
-
+    std::cout << "static points:  " << static_cloud->points.size()  << '\n';
+    std::cout << "dynamic points: " << dynamic_cloud->points.size() << '\n';
     return 0;
 }

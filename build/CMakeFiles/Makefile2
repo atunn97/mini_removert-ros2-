@@ -81,12 +81,12 @@ clean: CMakeFiles/mini_removert.dir/clean
 CMakeFiles/mini_removert.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini_removert.dir/build.make CMakeFiles/mini_removert.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini_removert.dir/build.make CMakeFiles/mini_removert.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/atun/mini_removert/build/CMakeFiles --progress-num=1,2,3,4,5,6 "Built target mini_removert"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/atun/mini_removert/build/CMakeFiles --progress-num=1,2,3,4,5,6,7 "Built target mini_removert"
 .PHONY : CMakeFiles/mini_removert.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/mini_removert.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/atun/mini_removert/build/CMakeFiles 6
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/atun/mini_removert/build/CMakeFiles 7
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/mini_removert.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/atun/mini_removert/build/CMakeFiles 0
 .PHONY : CMakeFiles/mini_removert.dir/rule
