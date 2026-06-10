@@ -27,12 +27,14 @@ RangeImage buildRangeImage(
         float horizontal_angle = std::atan2(point.y, point.x);
 
         int row = static_cast<int>((vertical_angle + vertical_fov_rad / 2) / vertical_fov_rad * height);
-        int col = static_cast<int>((horizontal_angle + horizontal_fov_rad / 2) / horizontal_fov_rad * width);
-
-        if (row >= 0 && row < height && col >= 0 && col < width)
-        {
-            range_image[row][col] = std::min(range_image[row][col], distance);
-        }
+        int col = static_cast<int>(
+            (horizontal_angle + M_PI) / (2.0f * M_PI) * width);
+        col = std::min(col, width - 1);  // tránh edge case col == width
+        row = std::clamp(row, 0, height - 1);
+        col = std::clamp(col, 0, width - 1);
+        // Rồi mới gán, bỏ if check
+        range_image[row][col] = std::min(range_image[row][col], distance);
+        if (distance < 0.1f) continue; // Thay vì chỉ check == 0
     }
 
     return range_image;

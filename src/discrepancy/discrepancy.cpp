@@ -62,6 +62,9 @@ RangeImage computeDiscrepancy(
                 discrepancy_image[row][col] =
                     diff;
             }
+            else {
+                discrepancy_image[row][col] = 0.0f;     // static
+            }
         }
     }
 

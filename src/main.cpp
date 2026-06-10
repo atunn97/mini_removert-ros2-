@@ -34,13 +34,17 @@ int main()
     map_p2.x = 10;
     map_p2.y = 1;
     map_p2.z = 0;
+    // Thêm điểm chỉ có trong scan, không có trong map
+    PointT scan_p3;
+    scan_p3.x = 5; scan_p3.y = 5; scan_p3.z = 0;
+    scan_cloud->points.push_back(scan_p3);
+    // map không có điểm tương ứng → pixel đó phải là infinity (unknown)
 
     scan_cloud->points.push_back(scan_p1);
     scan_cloud->points.push_back(scan_p2);
 
     map_cloud->points.push_back(map_p1);
     map_cloud->points.push_back(map_p2);
-
     constexpr int height = 16;
     constexpr int width = 32;
     constexpr float vertical_fov_deg = 60.0f;
@@ -81,16 +85,6 @@ int main()
             }
         }
     }
-    Frame frame =
-        loadFrame(
-            "../data/test.pcd",
-            Eigen::Matrix4f::Identity(),
-            0.0);
-
-    std::cout
-        << frame.cloud->points.size()
-        << std::endl;
-
     std::cout << "scan points: " << scan_cloud->points.size() << '\n';
     std::cout << "map points: " << map_cloud->points.size() << '\n';
     std::cout << "discrepancy count: " << diff_count << '\n';
