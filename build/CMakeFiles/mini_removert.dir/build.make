@@ -153,6 +153,20 @@ CMakeFiles/mini_removert.dir/src/filter/filter.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/mini_removert.dir/src/filter/filter.cpp.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/atun/mini_removert/src/filter/filter.cpp -o CMakeFiles/mini_removert.dir/src/filter/filter.cpp.s
 
+CMakeFiles/mini_removert.dir/src/ground_filter/ground_filter.cpp.o: CMakeFiles/mini_removert.dir/flags.make
+CMakeFiles/mini_removert.dir/src/ground_filter/ground_filter.cpp.o: /home/atun/mini_removert/src/ground_filter/ground_filter.cpp
+CMakeFiles/mini_removert.dir/src/ground_filter/ground_filter.cpp.o: CMakeFiles/mini_removert.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/atun/mini_removert/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/mini_removert.dir/src/ground_filter/ground_filter.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/mini_removert.dir/src/ground_filter/ground_filter.cpp.o -MF CMakeFiles/mini_removert.dir/src/ground_filter/ground_filter.cpp.o.d -o CMakeFiles/mini_removert.dir/src/ground_filter/ground_filter.cpp.o -c /home/atun/mini_removert/src/ground_filter/ground_filter.cpp
+
+CMakeFiles/mini_removert.dir/src/ground_filter/ground_filter.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/mini_removert.dir/src/ground_filter/ground_filter.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/atun/mini_removert/src/ground_filter/ground_filter.cpp > CMakeFiles/mini_removert.dir/src/ground_filter/ground_filter.cpp.i
+
+CMakeFiles/mini_removert.dir/src/ground_filter/ground_filter.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/mini_removert.dir/src/ground_filter/ground_filter.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/atun/mini_removert/src/ground_filter/ground_filter.cpp -o CMakeFiles/mini_removert.dir/src/ground_filter/ground_filter.cpp.s
+
 # Object files for target mini_removert
 mini_removert_OBJECTS = \
 "CMakeFiles/mini_removert.dir/src/main.cpp.o" \
@@ -160,7 +174,8 @@ mini_removert_OBJECTS = \
 "CMakeFiles/mini_removert.dir/src/range_image/range_image.cpp.o" \
 "CMakeFiles/mini_removert.dir/src/discrepancy/discrepancy.cpp.o" \
 "CMakeFiles/mini_removert.dir/src/io/pcd_loader.cpp.o" \
-"CMakeFiles/mini_removert.dir/src/filter/filter.cpp.o"
+"CMakeFiles/mini_removert.dir/src/filter/filter.cpp.o" \
+"CMakeFiles/mini_removert.dir/src/ground_filter/ground_filter.cpp.o"
 
 # External object files for target mini_removert
 mini_removert_EXTERNAL_OBJECTS =
@@ -171,29 +186,34 @@ mini_removert: CMakeFiles/mini_removert.dir/src/range_image/range_image.cpp.o
 mini_removert: CMakeFiles/mini_removert.dir/src/discrepancy/discrepancy.cpp.o
 mini_removert: CMakeFiles/mini_removert.dir/src/io/pcd_loader.cpp.o
 mini_removert: CMakeFiles/mini_removert.dir/src/filter/filter.cpp.o
+mini_removert: CMakeFiles/mini_removert.dir/src/ground_filter/ground_filter.cpp.o
 mini_removert: CMakeFiles/mini_removert.dir/build.make
 mini_removert: /usr/lib/x86_64-linux-gnu/libpcl_io.so
+mini_removert: /usr/lib/x86_64-linux-gnu/libpcl_segmentation.so
 mini_removert: /usr/lib/libOpenNI.so
 mini_removert: /usr/lib/x86_64-linux-gnu/libusb-1.0.so
 mini_removert: /usr/lib/x86_64-linux-gnu/libOpenNI2.so
 mini_removert: /usr/lib/x86_64-linux-gnu/libusb-1.0.so
+mini_removert: /usr/lib/x86_64-linux-gnu/libflann_cpp.so.1.9.2
+mini_removert: /usr/lib/x86_64-linux-gnu/libpcap.so
+mini_removert: /usr/lib/x86_64-linux-gnu/libpng.so
+mini_removert: /usr/lib/x86_64-linux-gnu/libz.so
+mini_removert: /usr/lib/x86_64-linux-gnu/libpcl_features.so
+mini_removert: /usr/lib/x86_64-linux-gnu/libpcl_filters.so
+mini_removert: /usr/lib/x86_64-linux-gnu/libpcl_sample_consensus.so
+mini_removert: /usr/lib/x86_64-linux-gnu/libpcl_search.so
+mini_removert: /usr/lib/x86_64-linux-gnu/libpcl_octree.so
+mini_removert: /usr/lib/x86_64-linux-gnu/libpcl_kdtree.so
 mini_removert: /usr/lib/x86_64-linux-gnu/libvtkChartsCore-9.1.so.9.1.0
 mini_removert: /usr/lib/x86_64-linux-gnu/libvtkInteractionImage-9.1.so.9.1.0
 mini_removert: /usr/lib/x86_64-linux-gnu/libvtkIOGeometry-9.1.so.9.1.0
+mini_removert: /usr/lib/x86_64-linux-gnu/libjsoncpp.so
 mini_removert: /usr/lib/x86_64-linux-gnu/libvtkIOPLY-9.1.so.9.1.0
 mini_removert: /usr/lib/x86_64-linux-gnu/libvtkRenderingLOD-9.1.so.9.1.0
 mini_removert: /usr/lib/x86_64-linux-gnu/libvtkViewsContext2D-9.1.so.9.1.0
+mini_removert: /usr/lib/x86_64-linux-gnu/libvtkViewsCore-9.1.so.9.1.0
 mini_removert: /usr/lib/x86_64-linux-gnu/libvtkRenderingContextOpenGL2-9.1.so.9.1.0
 mini_removert: /usr/lib/x86_64-linux-gnu/libvtkGUISupportQt-9.1.so.9.1.0
-mini_removert: /usr/lib/x86_64-linux-gnu/libpcl_octree.so
-mini_removert: /usr/lib/x86_64-linux-gnu/libpcl_common.so
-mini_removert: /usr/lib/x86_64-linux-gnu/libboost_system.so.1.83.0
-mini_removert: /usr/lib/x86_64-linux-gnu/libboost_filesystem.so.1.83.0
-mini_removert: /usr/lib/x86_64-linux-gnu/libboost_atomic.so.1.83.0
-mini_removert: /usr/lib/x86_64-linux-gnu/libboost_iostreams.so.1.83.0
-mini_removert: /usr/lib/x86_64-linux-gnu/libboost_serialization.so.1.83.0
-mini_removert: /usr/lib/x86_64-linux-gnu/libjsoncpp.so
-mini_removert: /usr/lib/x86_64-linux-gnu/libvtkViewsCore-9.1.so.9.1.0
 mini_removert: /usr/lib/x86_64-linux-gnu/libvtkInteractionWidgets-9.1.so.9.1.0
 mini_removert: /usr/lib/x86_64-linux-gnu/libvtkFiltersModeling-9.1.so.9.1.0
 mini_removert: /usr/lib/x86_64-linux-gnu/libvtkInteractionStyle-9.1.so.9.1.0
@@ -231,13 +251,19 @@ mini_removert: /usr/lib/x86_64-linux-gnu/libQt5Core.so.5.15.13
 mini_removert: /usr/lib/x86_64-linux-gnu/libvtkCommonCore-9.1.so.9.1.0
 mini_removert: /usr/lib/x86_64-linux-gnu/libtbb.so.12.11
 mini_removert: /usr/lib/x86_64-linux-gnu/libvtksys-9.1.so.9.1.0
-mini_removert: /usr/lib/x86_64-linux-gnu/libpcap.so
-mini_removert: /usr/lib/x86_64-linux-gnu/libpng.so
-mini_removert: /usr/lib/x86_64-linux-gnu/libz.so
+mini_removert: /usr/lib/x86_64-linux-gnu/libpcl_ml.so
 mini_removert: /usr/lib/gcc/x86_64-linux-gnu/13/libgomp.so
 mini_removert: /usr/lib/x86_64-linux-gnu/libpthread.a
+mini_removert: /usr/lib/x86_64-linux-gnu/libpcl_common.so
+mini_removert: /usr/lib/x86_64-linux-gnu/libboost_system.so.1.83.0
+mini_removert: /usr/lib/x86_64-linux-gnu/libboost_filesystem.so.1.83.0
+mini_removert: /usr/lib/x86_64-linux-gnu/libboost_atomic.so.1.83.0
+mini_removert: /usr/lib/x86_64-linux-gnu/libboost_iostreams.so.1.83.0
+mini_removert: /usr/lib/x86_64-linux-gnu/libboost_serialization.so.1.83.0
+mini_removert: /usr/lib/x86_64-linux-gnu/libflann_cpp_s.a
+mini_removert: /usr/lib/x86_64-linux-gnu/liblz4.so
 mini_removert: CMakeFiles/mini_removert.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/atun/mini_removert/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Linking CXX executable mini_removert"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/atun/mini_removert/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Linking CXX executable mini_removert"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/mini_removert.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

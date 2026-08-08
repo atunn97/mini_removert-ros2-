@@ -11,22 +11,31 @@ RangeImage buildRangeImage(
     const pcl::PointCloud<PointT>::Ptr& cloud,
     int height,
     int width,
-    float vertical_fov_deg,
-    float horizontal_fov_deg)
+    float vertical_angle_min_deg,
+    float vertical_angle_max_deg,
+    const std::vector<bool>* exclude_mask)
 {
     RangeImage range_image(height, std::vector<float>(width, std::numeric_limits<float>::infinity()));
 
-    float vertical_fov_rad = vertical_fov_deg * M_PI / 180.0f;
+    float v_min = vertical_angle_min_deg * M_PI / 180.0f;
+    float v_max = vertical_angle_max_deg * M_PI / 180.0f;
+    float v_span = v_max - v_min;
 
-    for (const auto& point : cloud->points)
+    for (size_t i = 0; i < cloud->points.size(); ++i)
     {
+        if (exclude_mask && (*exclude_mask)[i]) continue;
+
+        const auto& point = cloud->points[i];
+
         float distance = std::sqrt(point.x * point.x + point.y * point.y + point.z * point.z);
-        if (distance < 0.1f) continue; // blind filter — bỏ điểm quá gần sensor
+        if (distance < 0.1f) continue;
 
         float vertical_angle = std::atan2(point.z, std::sqrt(point.x * point.x + point.y * point.y));
         float horizontal_angle = std::atan2(point.y, point.x);
 
-        int row = static_cast<int>((vertical_angle + vertical_fov_rad / 2) / vertical_fov_rad * height);
+        if (vertical_angle < v_min || vertical_angle > v_max) continue;
+
+        int row = static_cast<int>((vertical_angle - v_min) / v_span * height);
         int col = static_cast<int>((horizontal_angle + M_PI) / (2.0f * M_PI) * width);
         row = std::clamp(row, 0, height - 1);
         col = std::clamp(col, 0, width - 1);

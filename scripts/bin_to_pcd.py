@@ -35,8 +35,8 @@ def convert_sequence(bin_dir, pcd_dir, limit=None):
     print("Done.")
 
 if __name__ == "__main__":
-    convert_sequence(
-        "/đường/dẫn/sequences/00/velodyne",
-        "/đường/dẫn/sequences/00/pcd",
-        limit=20  # thử 20 file trước
+    convert_sequence( 
+        "/home/atun/kitti_data/dataset/sequences/04/velodyne",
+        "/home/atun/kitti_data/dataset/sequences/04/pcd",
+        limit=None
     )

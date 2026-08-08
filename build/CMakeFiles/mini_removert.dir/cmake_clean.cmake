@@ -3,6 +3,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/mini_removert.dir/src/discrepancy/discrepancy.cpp.o.d"
   "CMakeFiles/mini_removert.dir/src/filter/filter.cpp.o"
   "CMakeFiles/mini_removert.dir/src/filter/filter.cpp.o.d"
+  "CMakeFiles/mini_removert.dir/src/ground_filter/ground_filter.cpp.o"
+  "CMakeFiles/mini_removert.dir/src/ground_filter/ground_filter.cpp.o.d"
   "CMakeFiles/mini_removert.dir/src/io/pcd_loader.cpp.o"
   "CMakeFiles/mini_removert.dir/src/io/pcd_loader.cpp.o.d"
   "CMakeFiles/mini_removert.dir/src/main.cpp.o"

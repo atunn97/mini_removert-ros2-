@@ -177,6 +177,30 @@ src/filter/filter.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini_removert.dir/build.make CMakeFiles/mini_removert.dir/src/filter/filter.cpp.s
 .PHONY : src/filter/filter.cpp.s
 
+src/ground_filter/ground_filter.o: src/ground_filter/ground_filter.cpp.o
+.PHONY : src/ground_filter/ground_filter.o
+
+# target to build an object file
+src/ground_filter/ground_filter.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini_removert.dir/build.make CMakeFiles/mini_removert.dir/src/ground_filter/ground_filter.cpp.o
+.PHONY : src/ground_filter/ground_filter.cpp.o
+
+src/ground_filter/ground_filter.i: src/ground_filter/ground_filter.cpp.i
+.PHONY : src/ground_filter/ground_filter.i
+
+# target to preprocess a source file
+src/ground_filter/ground_filter.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini_removert.dir/build.make CMakeFiles/mini_removert.dir/src/ground_filter/ground_filter.cpp.i
+.PHONY : src/ground_filter/ground_filter.cpp.i
+
+src/ground_filter/ground_filter.s: src/ground_filter/ground_filter.cpp.s
+.PHONY : src/ground_filter/ground_filter.s
+
+# target to generate assembly for a file
+src/ground_filter/ground_filter.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mini_removert.dir/build.make CMakeFiles/mini_removert.dir/src/ground_filter/ground_filter.cpp.s
+.PHONY : src/ground_filter/ground_filter.cpp.s
+
 src/io/pcd_loader.o: src/io/pcd_loader.cpp.o
 .PHONY : src/io/pcd_loader.o
 
@@ -288,6 +312,9 @@ help:
 	@echo "... src/filter/filter.o"
 	@echo "... src/filter/filter.i"
 	@echo "... src/filter/filter.s"
+	@echo "... src/ground_filter/ground_filter.o"
+	@echo "... src/ground_filter/ground_filter.i"
+	@echo "... src/ground_filter/ground_filter.s"
 	@echo "... src/io/pcd_loader.o"
 	@echo "... src/io/pcd_loader.i"
 	@echo "... src/io/pcd_loader.s"

@@ -16,6 +16,7 @@ namespace range_image
         const pcl::PointCloud<PointT>::Ptr& cloud,
         int height,
         int width,
-        float vertical_fov_deg,
-        float horizontal_fov_deg);
+        float vertical_angle_min_deg,
+        float vertical_angle_max_deg,
+        const std::vector<bool>* exclude_mask = nullptr);
 }

@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-find_package(PCL REQUIRED COMPONENTS common io)
+find_package(PCL REQUIRED COMPONENTS common io segmentation)
 
 include_directories(${PCL_INCLUDE_DIRS})
 add_definitions(${PCL_DEFINITIONS})
@@ -16,7 +16,8 @@ add_executable(mini_removert
     src/range_image/range_image.cpp
     src/discrepancy/discrepancy.cpp
     src/io/pcd_loader.cpp
-    src/filter/filter.cpp  
+    src/filter/filter.cpp
+    src/ground_filter/ground_filter.cpp
 )
 
 target_include_directories(mini_removert PRIVATE

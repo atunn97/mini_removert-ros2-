@@ -1384,3 +1384,121 @@ events:
         
       exitCode: 0
 ...
+
+---
+events:
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/usr/share/cmake-3.28/Modules/FindMPI.cmake:1278 (try_compile)"
+      - "/usr/share/cmake-3.28/Modules/FindMPI.cmake:1322 (_MPI_try_staged_settings)"
+      - "/usr/share/cmake-3.28/Modules/FindMPI.cmake:1645 (_MPI_check_lang_works)"
+      - "/usr/lib/x86_64-linux-gnu/cmake/vtk-9.1/VTK-vtk-module-find-packages.cmake:397 (find_package)"
+      - "/usr/lib/x86_64-linux-gnu/cmake/vtk-9.1/vtk-config.cmake:150 (include)"
+      - "/usr/lib/x86_64-linux-gnu/cmake/pcl/PCLConfig.cmake:275 (find_package)"
+      - "/usr/lib/x86_64-linux-gnu/cmake/pcl/PCLConfig.cmake:324 (find_VTK)"
+      - "/usr/lib/x86_64-linux-gnu/cmake/pcl/PCLConfig.cmake:567 (find_external_library)"
+      - "CMakeLists.txt:8 (find_package)"
+    description: "The MPI test test_mpi for C in mode normal"
+    directories:
+      source: "/home/atun/mini_removert/build/CMakeFiles/CMakeScratch/TryCompile-wg2sDa"
+      binary: "/home/atun/mini_removert/build/CMakeFiles/CMakeScratch/TryCompile-wg2sDa"
+    cmakeVariables:
+      CMAKE_C_FLAGS: ""
+      CMAKE_C_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: ""
+      CMAKE_MODULE_PATH: "/usr/lib/x86_64-linux-gnu/cmake/vtk-9.1/patches/99;/usr/lib/x86_64-linux-gnu/cmake/vtk-9.1;/usr/lib/x86_64-linux-gnu/cmake/pcl/Modules"
+    buildResult:
+      variable: "MPI_RESULT_C_test_mpi_normal"
+      cached: true
+      stdout: |
+        Change Dir: '/home/atun/mini_removert/build/CMakeFiles/CMakeScratch/TryCompile-wg2sDa'
+        
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_9997f/fast
+        /usr/bin/gmake  -f CMakeFiles/cmTC_9997f.dir/build.make CMakeFiles/cmTC_9997f.dir/build
+        gmake[1]: Entering directory '/home/atun/mini_removert/build/CMakeFiles/CMakeScratch/TryCompile-wg2sDa'
+        Building C object CMakeFiles/cmTC_9997f.dir/test_mpi.c.o
+        /usr/bin/cc  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -o CMakeFiles/cmTC_9997f.dir/test_mpi.c.o -c /home/atun/mini_removert/build/CMakeFiles/CMakeScratch/TryCompile-wg2sDa/test_mpi.c
+        Linking C executable cmTC_9997f
+        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_9997f.dir/link.txt --verbose=1
+        /usr/bin/cc -L/usr/lib/x86_64-linux-gnu/openmpi/lib CMakeFiles/cmTC_9997f.dir/test_mpi.c.o -o cmTC_9997f  /usr/lib/x86_64-linux-gnu/libmpi.so 
+        gmake[1]: Leaving directory '/home/atun/mini_removert/build/CMakeFiles/CMakeScratch/TryCompile-wg2sDa'
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/usr/share/cmake-3.28/Modules/FindMPI.cmake:1278 (try_compile)"
+      - "/usr/share/cmake-3.28/Modules/FindMPI.cmake:1322 (_MPI_try_staged_settings)"
+      - "/usr/share/cmake-3.28/Modules/FindMPI.cmake:1645 (_MPI_check_lang_works)"
+      - "/usr/lib/x86_64-linux-gnu/cmake/vtk-9.1/VTK-vtk-module-find-packages.cmake:397 (find_package)"
+      - "/usr/lib/x86_64-linux-gnu/cmake/vtk-9.1/vtk-config.cmake:150 (include)"
+      - "/usr/lib/x86_64-linux-gnu/cmake/pcl/PCLConfig.cmake:275 (find_package)"
+      - "/usr/lib/x86_64-linux-gnu/cmake/pcl/PCLConfig.cmake:324 (find_VTK)"
+      - "/usr/lib/x86_64-linux-gnu/cmake/pcl/PCLConfig.cmake:567 (find_external_library)"
+      - "CMakeLists.txt:8 (find_package)"
+    description: "The MPI test test_mpi for C in mode normal"
+    directories:
+      source: "/home/atun/mini_removert/build/CMakeFiles/CMakeScratch/TryCompile-Ee4zPi"
+      binary: "/home/atun/mini_removert/build/CMakeFiles/CMakeScratch/TryCompile-Ee4zPi"
+    cmakeVariables:
+      CMAKE_C_FLAGS: ""
+      CMAKE_C_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: ""
+      CMAKE_MODULE_PATH: "/usr/lib/x86_64-linux-gnu/cmake/vtk-9.1/patches/99;/usr/lib/x86_64-linux-gnu/cmake/vtk-9.1;/usr/lib/x86_64-linux-gnu/cmake/pcl/Modules"
+    buildResult:
+      variable: "MPI_RESULT_C_test_mpi_normal"
+      cached: true
+      stdout: |
+        Change Dir: '/home/atun/mini_removert/build/CMakeFiles/CMakeScratch/TryCompile-Ee4zPi'
+        
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_ecd94/fast
+        /usr/bin/gmake  -f CMakeFiles/cmTC_ecd94.dir/build.make CMakeFiles/cmTC_ecd94.dir/build
+        gmake[1]: Entering directory '/home/atun/mini_removert/build/CMakeFiles/CMakeScratch/TryCompile-Ee4zPi'
+        Building C object CMakeFiles/cmTC_ecd94.dir/test_mpi.c.o
+        /usr/bin/cc  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -o CMakeFiles/cmTC_ecd94.dir/test_mpi.c.o -c /home/atun/mini_removert/build/CMakeFiles/CMakeScratch/TryCompile-Ee4zPi/test_mpi.c
+        Linking C executable cmTC_ecd94
+        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_ecd94.dir/link.txt --verbose=1
+        /usr/bin/cc -L/usr/lib/x86_64-linux-gnu/openmpi/lib CMakeFiles/cmTC_ecd94.dir/test_mpi.c.o -o cmTC_ecd94  /usr/lib/x86_64-linux-gnu/libmpi.so 
+        gmake[1]: Leaving directory '/home/atun/mini_removert/build/CMakeFiles/CMakeScratch/TryCompile-Ee4zPi'
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/usr/share/cmake-3.28/Modules/FindMPI.cmake:1278 (try_compile)"
+      - "/usr/share/cmake-3.28/Modules/FindMPI.cmake:1322 (_MPI_try_staged_settings)"
+      - "/usr/share/cmake-3.28/Modules/FindMPI.cmake:1645 (_MPI_check_lang_works)"
+      - "/usr/lib/x86_64-linux-gnu/cmake/vtk-9.1/VTK-vtk-module-find-packages.cmake:397 (find_package)"
+      - "/usr/lib/x86_64-linux-gnu/cmake/vtk-9.1/vtk-config.cmake:150 (include)"
+      - "/usr/lib/x86_64-linux-gnu/cmake/pcl/PCLConfig.cmake:275 (find_package)"
+      - "/usr/lib/x86_64-linux-gnu/cmake/pcl/PCLConfig.cmake:324 (find_VTK)"
+      - "/usr/lib/x86_64-linux-gnu/cmake/pcl/PCLConfig.cmake:567 (find_external_library)"
+      - "CMakeLists.txt:8 (find_package)"
+    description: "The MPI test test_mpi for C in mode normal"
+    directories:
+      source: "/home/atun/mini_removert/build/CMakeFiles/CMakeScratch/TryCompile-FAx5yg"
+      binary: "/home/atun/mini_removert/build/CMakeFiles/CMakeScratch/TryCompile-FAx5yg"
+    cmakeVariables:
+      CMAKE_C_FLAGS: ""
+      CMAKE_C_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: ""
+      CMAKE_MODULE_PATH: "/usr/lib/x86_64-linux-gnu/cmake/vtk-9.1/patches/99;/usr/lib/x86_64-linux-gnu/cmake/vtk-9.1;/usr/lib/x86_64-linux-gnu/cmake/pcl/Modules"
+    buildResult:
+      variable: "MPI_RESULT_C_test_mpi_normal"
+      cached: true
+      stdout: |
+        Change Dir: '/home/atun/mini_removert/build/CMakeFiles/CMakeScratch/TryCompile-FAx5yg'
+        
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_c6662/fast
+        /usr/bin/gmake  -f CMakeFiles/cmTC_c6662.dir/build.make CMakeFiles/cmTC_c6662.dir/build
+        gmake[1]: Entering directory '/home/atun/mini_removert/build/CMakeFiles/CMakeScratch/TryCompile-FAx5yg'
+        Building C object CMakeFiles/cmTC_c6662.dir/test_mpi.c.o
+        /usr/bin/cc  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -o CMakeFiles/cmTC_c6662.dir/test_mpi.c.o -c /home/atun/mini_removert/build/CMakeFiles/CMakeScratch/TryCompile-FAx5yg/test_mpi.c
+        Linking C executable cmTC_c6662
+        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_c6662.dir/link.txt --verbose=1
+        /usr/bin/cc -L/usr/lib/x86_64-linux-gnu/openmpi/lib CMakeFiles/cmTC_c6662.dir/test_mpi.c.o -o cmTC_c6662  /usr/lib/x86_64-linux-gnu/libmpi.so 
+        gmake[1]: Leaving directory '/home/atun/mini_removert/build/CMakeFiles/CMakeScratch/TryCompile-FAx5yg'
+        
+      exitCode: 0
+...
