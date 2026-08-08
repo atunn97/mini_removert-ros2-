@@ -1300,3 +1300,87 @@ events:
         
       exitCode: 0
 ...
+
+---
+events:
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/usr/share/cmake-3.28/Modules/FindMPI.cmake:1278 (try_compile)"
+      - "/usr/share/cmake-3.28/Modules/FindMPI.cmake:1322 (_MPI_try_staged_settings)"
+      - "/usr/share/cmake-3.28/Modules/FindMPI.cmake:1645 (_MPI_check_lang_works)"
+      - "/usr/lib/x86_64-linux-gnu/cmake/vtk-9.1/VTK-vtk-module-find-packages.cmake:397 (find_package)"
+      - "/usr/lib/x86_64-linux-gnu/cmake/vtk-9.1/vtk-config.cmake:150 (include)"
+      - "/usr/lib/x86_64-linux-gnu/cmake/pcl/PCLConfig.cmake:275 (find_package)"
+      - "/usr/lib/x86_64-linux-gnu/cmake/pcl/PCLConfig.cmake:324 (find_VTK)"
+      - "/usr/lib/x86_64-linux-gnu/cmake/pcl/PCLConfig.cmake:567 (find_external_library)"
+      - "CMakeLists.txt:8 (find_package)"
+    description: "The MPI test test_mpi for C in mode normal"
+    directories:
+      source: "/home/atun/mini_removert/build/CMakeFiles/CMakeScratch/TryCompile-VjERGp"
+      binary: "/home/atun/mini_removert/build/CMakeFiles/CMakeScratch/TryCompile-VjERGp"
+    cmakeVariables:
+      CMAKE_C_FLAGS: ""
+      CMAKE_C_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: ""
+      CMAKE_MODULE_PATH: "/usr/lib/x86_64-linux-gnu/cmake/vtk-9.1/patches/99;/usr/lib/x86_64-linux-gnu/cmake/vtk-9.1;/usr/lib/x86_64-linux-gnu/cmake/pcl/Modules"
+    buildResult:
+      variable: "MPI_RESULT_C_test_mpi_normal"
+      cached: true
+      stdout: |
+        Change Dir: '/home/atun/mini_removert/build/CMakeFiles/CMakeScratch/TryCompile-VjERGp'
+        
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_51527/fast
+        /usr/bin/gmake  -f CMakeFiles/cmTC_51527.dir/build.make CMakeFiles/cmTC_51527.dir/build
+        gmake[1]: Entering directory '/home/atun/mini_removert/build/CMakeFiles/CMakeScratch/TryCompile-VjERGp'
+        Building C object CMakeFiles/cmTC_51527.dir/test_mpi.c.o
+        /usr/bin/cc  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -o CMakeFiles/cmTC_51527.dir/test_mpi.c.o -c /home/atun/mini_removert/build/CMakeFiles/CMakeScratch/TryCompile-VjERGp/test_mpi.c
+        Linking C executable cmTC_51527
+        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_51527.dir/link.txt --verbose=1
+        /usr/bin/cc -L/usr/lib/x86_64-linux-gnu/openmpi/lib CMakeFiles/cmTC_51527.dir/test_mpi.c.o -o cmTC_51527  /usr/lib/x86_64-linux-gnu/libmpi.so 
+        gmake[1]: Leaving directory '/home/atun/mini_removert/build/CMakeFiles/CMakeScratch/TryCompile-VjERGp'
+        
+      exitCode: 0
+...
+
+---
+events:
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/usr/share/cmake-3.28/Modules/FindMPI.cmake:1278 (try_compile)"
+      - "/usr/share/cmake-3.28/Modules/FindMPI.cmake:1322 (_MPI_try_staged_settings)"
+      - "/usr/share/cmake-3.28/Modules/FindMPI.cmake:1645 (_MPI_check_lang_works)"
+      - "/usr/lib/x86_64-linux-gnu/cmake/vtk-9.1/VTK-vtk-module-find-packages.cmake:397 (find_package)"
+      - "/usr/lib/x86_64-linux-gnu/cmake/vtk-9.1/vtk-config.cmake:150 (include)"
+      - "/usr/lib/x86_64-linux-gnu/cmake/pcl/PCLConfig.cmake:275 (find_package)"
+      - "/usr/lib/x86_64-linux-gnu/cmake/pcl/PCLConfig.cmake:324 (find_VTK)"
+      - "/usr/lib/x86_64-linux-gnu/cmake/pcl/PCLConfig.cmake:567 (find_external_library)"
+      - "CMakeLists.txt:8 (find_package)"
+    description: "The MPI test test_mpi for C in mode normal"
+    directories:
+      source: "/home/atun/mini_removert/build/CMakeFiles/CMakeScratch/TryCompile-9InJ8Z"
+      binary: "/home/atun/mini_removert/build/CMakeFiles/CMakeScratch/TryCompile-9InJ8Z"
+    cmakeVariables:
+      CMAKE_C_FLAGS: ""
+      CMAKE_C_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: ""
+      CMAKE_MODULE_PATH: "/usr/lib/x86_64-linux-gnu/cmake/vtk-9.1/patches/99;/usr/lib/x86_64-linux-gnu/cmake/vtk-9.1;/usr/lib/x86_64-linux-gnu/cmake/pcl/Modules"
+    buildResult:
+      variable: "MPI_RESULT_C_test_mpi_normal"
+      cached: true
+      stdout: |
+        Change Dir: '/home/atun/mini_removert/build/CMakeFiles/CMakeScratch/TryCompile-9InJ8Z'
+        
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_6c9c2/fast
+        /usr/bin/gmake  -f CMakeFiles/cmTC_6c9c2.dir/build.make CMakeFiles/cmTC_6c9c2.dir/build
+        gmake[1]: Entering directory '/home/atun/mini_removert/build/CMakeFiles/CMakeScratch/TryCompile-9InJ8Z'
+        Building C object CMakeFiles/cmTC_6c9c2.dir/test_mpi.c.o
+        /usr/bin/cc  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -o CMakeFiles/cmTC_6c9c2.dir/test_mpi.c.o -c /home/atun/mini_removert/build/CMakeFiles/CMakeScratch/TryCompile-9InJ8Z/test_mpi.c
+        Linking C executable cmTC_6c9c2
+        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_6c9c2.dir/link.txt --verbose=1
+        /usr/bin/cc -L/usr/lib/x86_64-linux-gnu/openmpi/lib CMakeFiles/cmTC_6c9c2.dir/test_mpi.c.o -o cmTC_6c9c2  /usr/lib/x86_64-linux-gnu/libmpi.so 
+        gmake[1]: Leaving directory '/home/atun/mini_removert/build/CMakeFiles/CMakeScratch/TryCompile-9InJ8Z'
+        
+      exitCode: 0
+...
