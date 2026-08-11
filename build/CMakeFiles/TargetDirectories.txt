@@ -1,3 +1,0 @@
-/home/atun/mini_removert/build/CMakeFiles/mini_removert.dir
-/home/atun/mini_removert/build/CMakeFiles/edit_cache.dir
-/home/atun/mini_removert/build/CMakeFiles/rebuild_cache.dir

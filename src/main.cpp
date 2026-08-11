@@ -55,6 +55,8 @@ int main(int argc, char** argv)
 
     // Đếm số lần mỗi điểm trong scan bị đánh dấu "dynamic" qua các lần so sánh
     std::vector<int> vote_count(scan_frame.cloud->points.size(), 0);
+    // Đếm số lần mỗi điểm THỰC SỰ được quan sát bởi 1 map (mẫu số động, thay cho map_indices.size() cố định)
+    std::vector<int> observed_count(scan_frame.cloud->points.size(), 0);
 
     for (int map_idx : map_indices)
     {
@@ -79,24 +81,59 @@ int main(int argc, char** argv)
         auto dynamic_indices = filter::getDynamicIndices(
             scan_in_map_frame, discrepancy_image, height, width, v_angle_min, v_angle_max);
 
+        auto observed_indices = filter::getObservedIndices(
+            scan_in_map_frame, map_image, height, width, v_angle_min, v_angle_max);
+
         for (int idx : dynamic_indices)
             vote_count[idx]++;
+        for (int idx : observed_indices)
+            observed_count[idx]++;
 
-        std::cout << "  vs map[" << map_idx << "]: " << dynamic_indices.size() << " dynamic candidates\n";
+        std::cout << "  vs map[" << map_idx << "]: " << dynamic_indices.size() << " dynamic candidates, "
+                   << observed_indices.size() << " observed\n";
     }
 
-    // Voting: chỉ giữ điểm bị đánh dấu dynamic ở ĐA SỐ (>50%) các lần so sánh
-    int min_votes = static_cast<int>(map_indices.size()) / 2 + 1;
+    // ---- DEBUG sanity-check observed_count (tạm thời, để kiểm tra bug 3 checklist) ----
+    {
+        int n_maps = static_cast<int>(map_indices.size());
+        int min_obs = n_maps, max_obs = 0;
+        long sum_obs = 0;
+        int count_zero = 0, count_full = 0;
+        for (int v : observed_count)
+        {
+            min_obs = std::min(min_obs, v);
+            max_obs = std::max(max_obs, v);
+            sum_obs += v;
+            if (v == 0) count_zero++;
+            if (v == n_maps) count_full++;
+        }
+        double mean_obs = observed_count.empty() ? 0.0 : (double)sum_obs / observed_count.size();
+        std::cout << "\n[DEBUG] observed_count stats over " << observed_count.size() << " points (N=" << n_maps << " maps):\n"
+                  << "  min=" << min_obs << " max=" << max_obs << " mean=" << mean_obs << "\n"
+                  << "  count==0: " << count_zero << " (" << (100.0 * count_zero / observed_count.size()) << "%)\n"
+                  << "  count==N: " << count_full << " (" << (100.0 * count_full / observed_count.size()) << "%)\n";
+    }
+    // ---- END DEBUG ----
+
+    // Voting: per-point ratio = vote_count[i] / observed_count[i] (mẫu số động,
+    // thay cho map_indices.size() cố định). Điểm nào observed_count == 0 (không map
+    // nào quan sát được) thì BỎ QUA, không loại điểm đó (an toàn, tránh false dynamic).
+    constexpr float vote_threshold = 0.5f;
     std::vector<int> final_dynamic_indices;
     for (size_t i = 0; i < vote_count.size(); ++i)
-        if (vote_count[i] >= min_votes)
+    {
+        if (observed_count[i] == 0) continue; // không đủ dữ liệu để kết luận -> giữ nguyên (static)
+
+        float ratio = static_cast<float>(vote_count[i]) / static_cast<float>(observed_count[i]);
+        if (ratio > vote_threshold)
             final_dynamic_indices.push_back(static_cast<int>(i));
+    }
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr static_cloud(new pcl::PointCloud<pcl::PointXYZ>);
     pcl::PointCloud<pcl::PointXYZ>::Ptr dynamic_cloud(new pcl::PointCloud<pcl::PointXYZ>);
     filter::splitCloud(scan_frame.cloud, final_dynamic_indices, static_cloud, dynamic_cloud);
 
-    std::cout << "\n=== Kết quả sau voting (cần >= " << min_votes << "/" << map_indices.size() << " lần xác nhận) ===\n";
+    std::cout << "\n=== Kết quả sau voting (ratio > " << vote_threshold << ", mẫu số = observed_count per-point) ===\n";
     std::cout << "static points:  " << static_cloud->points.size()  << '\n';
     std::cout << "dynamic points: " << dynamic_cloud->points.size() << '\n';
 

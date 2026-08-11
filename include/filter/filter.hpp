@@ -17,6 +17,18 @@ std::vector<int> getDynamicIndices(
     float vertical_angle_min_deg,
     float vertical_angle_max_deg);
 
+// Tìm index của những điểm trong scan_cloud mà map_image THỰC SỰ có dữ liệu
+// tại pixel tương ứng (map_image[row][col] != infinity), tức "quan sát được"
+// bởi map này. Dùng std::isfinite() để check, khớp sentinel infinity thật
+// của buildRangeImage.
+std::vector<int> getObservedIndices(
+    const pcl::PointCloud<PointT>::Ptr& scan_cloud,
+    const RangeImage& map_image,
+    int height,
+    int width,
+    float vertical_angle_min_deg,
+    float vertical_angle_max_deg);
+
 // Tách scan_cloud thành static và dynamic
 void splitCloud(
     const pcl::PointCloud<PointT>::Ptr& scan_cloud,
