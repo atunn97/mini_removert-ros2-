@@ -16,7 +16,8 @@ SELECT_MAPS_PY="/home/atun/mini_removert/scripts/select_maps_by_distance.py"
 
 SCAN_IDX=150
 THRESHOLD=0.5
-MAX_DISTANCE_M=8.0     # ban kinh an toan (met) - da xac nhan qua thu nghiem
+MAX_DISTANCE_M=4.0     # ban kinh nho hon 8.0 cu - xac nhan qua maxdist-sweep tren 5 scan
+                        # (50/100/150/200/250): F1 tang 5/5, xem results_maxdist_sweep/
 RESULTS_DIR="/home/atun/mini_removert/results_n_sweep_v2"
 
 mkdir -p "$RESULTS_DIR"

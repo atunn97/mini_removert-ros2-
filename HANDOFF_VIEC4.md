@@ -280,3 +280,36 @@ Lần chạy `git add -A -n` gần nhất phát hiện 2 vấn đề cần xử 
    gốc, giải quyết tận gốc giới hạn baseline.
 5. **Dài hạn (tích hợp hệ thống):** thiết kế kiến trúc real-time cho Removert
    chạy song song FAST-LIO2 (mục 7) — cần trao đổi với người phụ trách stream A.
+
+---
+
+## 11. `max_distance_m` sweep — xác nhận baseline nhỏ hơn giúp precision (phiên tiếp theo)
+
+Làm theo đề mục 10.2 ở trên. Script mới: `scripts/run_maxdist_sweep.sh` (sweep
+`max_distance_m` ở N cố định, thay vì sweep N ở `max_distance_m` cố định như
+`run_n_sweep_v2.sh`). Kết quả trên `results_maxdist_sweep/` (không commit, tái
+tạo được).
+
+**Tại scan_idx=150**, sweep N=2 (max_d 1.5-8m) và N=4 (max_d 3-8m):
+precision giảm ĐƠN ĐIỆU khi `max_distance_m` tăng, ở CẢ 2 giá trị N — xác nhận
+đúng giả thuyết baseline/parallax ở mục 4-5. Tốt nhất: N=4, max_d=3-4m
+(precision=0.100, recall=0.976, F1=0.182) so với mốc cũ N=10/max_d=8m
+(F1=0.164). N=2/max_d≤2m (sàn của dataset — frame cách nhau tối thiểu ~1.4m
+trong seq04, không thể nhỏ hơn) cho F1 cao nhất tuyệt đối (0.191) nhưng đánh
+đổi recall xuống 0.90.
+
+**Kiểm tra generalization** trên 4 scan_idx khác (50, 100, 200, 250), so N=4/
+max_d=4 với mốc cũ N=10/max_d=8 — F1 tăng ở **5/5 scan** (150, 50, 100, 200,
+250): 0.164→0.182, 0.233→0.254, 0.414→0.469, 0.152→0.202, 0.154→0.175. Không
+phải overfit vào scan_idx=150.
+
+**Đã chốt baseline mới:** `N=4, max_distance_m=4.0` (cập nhật trong
+`run_n_sweep_v2.sh`), thay cho `N=10, max_distance_m=8.0` cũ.
+
+**Việc cần làm tiếp (chưa làm):**
+- RANSAC ground over-detect (~69.5%, cao hơn mức 30-50% điển hình) — chưa điều
+  tra, nghi ngờ gộp nhầm tường dài/vỉa hè vào mặt đất.
+- Threshold vote (đang cố định 0.5) và threshold discrepancy (đang cố định,
+  giữ nguyên `discrepancy.cpp`) chưa sweep lại với baseline N=4/max_d=4 mới.
+- N=2/max_d≤2m (F1 cao nhất nhưng recall thấp) chưa test generalization trên
+  nhiều scan như N=4 — nếu ưu tiên F1 tuyệt đối hơn recall, đáng thử.

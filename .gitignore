@@ -77,3 +77,4 @@ echo "results_n_sweep_v2/" >> .gitignore
 # ket qua chay N-sweep - tai tao duoc bang script, khong commit
 results_n_sweep/
 results_n_sweep_v2/
+results_maxdist_sweep/
