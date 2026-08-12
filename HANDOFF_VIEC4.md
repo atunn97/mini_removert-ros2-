@@ -307,9 +307,216 @@ phải overfit vào scan_idx=150.
 `run_n_sweep_v2.sh`), thay cho `N=10, max_distance_m=8.0` cũ.
 
 **Việc cần làm tiếp (chưa làm):**
-- RANSAC ground over-detect (~69.5%, cao hơn mức 30-50% điển hình) — chưa điều
-  tra, nghi ngờ gộp nhầm tường dài/vỉa hè vào mặt đất.
+- ~~RANSAC ground over-detect~~ → ĐÃ ĐIỀU TRA, xem mục 12 (kết quả bác bỏ phần
+  lớn giả định cũ).
 - Threshold vote (đang cố định 0.5) và threshold discrepancy (đang cố định,
   giữ nguyên `discrepancy.cpp`) chưa sweep lại với baseline N=4/max_d=4 mới.
 - N=2/max_d≤2m (F1 cao nhất nhưng recall thấp) chưa test generalization trên
   nhiều scan như N=4 — nếu ưu tiên F1 tuyệt đối hơn recall, đáng thử.
+
+---
+
+## 12. Điều tra RANSAC ground over-detect — bác bỏ giả định cũ, tìm ra thủ phạm thật
+
+### 12.1. Phương pháp
+
+Nghi vấn cũ (mục 10.2 và `handover_notes.md`): "RANSAC detect ~69.5% điểm là
+ground — hơi cao so với thực tế outdoor điển hình (30-50%), nghi ngờ RANSAC
+1-mặt-phẳng đang gom nhầm cả các bề mặt phẳng khác (tường dài, vỉa hè)".
+
+Cách kiểm chứng: KHÔNG sửa code core. Viết script Python độc lập đọc `.bin` +
+`.label` (SemanticKITTI có nhãn ground-truth cho TỪNG điểm), tự chạy RANSAC với
+đúng tham số PCL trong `ground_filter.cpp` (`SACMODEL_PLANE`, `SAC_RANSAC`,
+`distance_threshold=0.2`, `max_iterations=200`, refit least-squares trên inliers
+= `setOptimizeCoefficients(true)`). Class được coi là ground thật: road(40),
+parking(44), sidewalk(48), other-ground(49), lane-marking(60), terrain(72).
+
+Ba câu hỏi tách bạch: (a) tỷ lệ ground THẬT là bao nhiêu, (b) mặt phẳng tìm được
+có NGANG không, (c) gom nhầm class nào.
+
+### 12.2. Phát hiện 1 — con số 69.5% KHÔNG tái tạo được
+
+| | scan 150 |
+|---|---|
+| Ground THẬT (ground-truth) | **43.7%** |
+| RANSAC detect | **50.2%** |
+
+Rất ổn định: 50.2% ±0.1% qua 5 seed khác nhau. Quét `distance_threshold` từ 0.1
+đến 0.5 chỉ cho 41.5% → 62.0% — **không có tham số nào đạt tới 69.5%**. Con số
+69.5% trong ghi chú cũ nhiều khả năng đã lỗi thời (đo trước các lần fix FOV/blind)
+hoặc đo bằng cách khác.
+
+Ngoài ra mốc so sánh "30-50% điển hình outdoor" cũng không đúng với seq04: ground
+THẬT ở đây dao động 43.7-65.9% tùy scan (scan 250 tới 65.9%). Nên over-detect là
+CÓ THẬT nhưng chỉ ~6.5 điểm phần trăm — nhẹ hơn nhiều so với lo ngại ban đầu.
+
+### 12.3. Phát hiện 2 — giả thuyết "bám nhầm tường dài" là SAI
+
+Đo độ nghiêng của mặt phẳng RANSAC tìm được so với mặt ngang (góc giữa vector
+pháp tuyến và trục z): **~1° trên cả 5 scan** (nếu bám nhầm tường đứng thì phải
+~90°). Mặt phẳng nằm ở độ cao -1.75m dưới sensor — khớp chiều cao gắn Velodyne
+HDL-64E trên xe KITTI.
+
+→ RANSAC bám ĐÚNG mặt đất. Loại bỏ hoàn toàn giả thuyết "gom nhầm tường".
+
+Cái nó thật sự gom nhầm (scan 150, 13231 điểm sai):
+
+| Class bị gom nhầm vào ground | % của tổng số gom nhầm | % class đó bị nuốt |
+|---|---|---|
+| **vegetation** (cỏ/bụi thấp) | **87.2%** | 23.8% |
+| fence | 10.0% | 6.7% |
+| unlabeled | 1.7% | 13.3% |
+
+Và nó **bỏ sót 35.9% điểm sidewalk** — vì vỉa hè cao hơn mặt đường ~10-15cm nên
+là một mặt phẳng KHÁC, RANSAC 1-mặt-phẳng về bản chất không mô tả được cả hai.
+
+→ Kết luận đúng của ghi chú cũ ("nên cân nhắc Patchwork/Patchwork++") vẫn giữ
+nguyên giá trị, nhưng vì lý do khác: không phải do bám tường, mà do (i) không
+biểu diễn được nhiều mặt phẳng ở độ cao khác nhau, và (ii) nuốt cỏ/bụi thấp.
+
+### 12.4. Phát hiện 3 (QUAN TRỌNG NHẤT) — ground KHÔNG phải chỗ đang mất precision
+
+Phân tích thành phần 3241 điểm bị báo nhầm dynamic (FP) ở scan 150, cấu hình tốt
+nhất N=4/max_d=4:
+
+| Thành phần FP | Tỷ lệ |
+|---|---|
+| **vegetation** | **70.7%** |
+| sidewalk + road (ground thật) | 14.3% |
+| unlabeled | 8.3% |
+| trunk, fence, building, pole | 6.7% |
+
+→ **Kể cả ground segmentation hoàn hảo cũng chỉ cứu được ~14% FP.** Vegetation
+mới là thủ phạm chính (đo trên 5 scan: 31-71% FP là vegetation).
+
+Lý do bản chất: tán lá/bụi là **bề mặt xốp (porous)** — tia laser xuyên qua khe
+lá khác nhau ở mỗi viewpoint, nên range đo được lệch >0.5m NGAY CẢ KHI baseline
+rất nhỏ và cây hoàn toàn đứng yên. Đây không phải lỗi thuật toán, mà là giới hạn
+của việc so sánh range theo từng tia đơn lẻ.
+
+### 12.5. Phát hiện 4 — lỗ hổng logic thật, ĐÃ SỬA
+
+Ground bị loại khỏi **range image** (`buildRangeImage` nhận `exclude_mask`),
+nhưng **không bị loại khỏi danh sách ứng viên dynamic**: `getDynamicIndices`
+duyệt MỌI điểm rồi tra `discrepancy_image[row][col]`, nên một điểm mặt đường vẫn
+bị gán "dynamic" theo phán quyết của pixel mà nó chia sẻ với vật khác — rõ ràng
+không ai cố ý.
+
+Đo được (scan 150): **745/3602 (20.7%)** điểm báo dynamic nằm trong mask ground,
+trong đó **724 là FP, chỉ 21 là TP** — tỷ lệ đánh đổi rất tốt.
+
+**Đã sửa trong `main.cpp`:**
+1. Thêm `if (scan_ground_mask[i]) continue;` ở tầng voting — ground không bao giờ
+   là dynamic.
+2. Tiện thể: `detectGroundMask(scan_in_map_frame)` trước đây gọi lại MỖI vòng lặp
+   map. Ground membership **bất biến qua phép biến đổi cứng** (phép quay/tịnh
+   tiến bảo toàn khoảng cách điểm→mặt phẳng), nên chuyển ra ngoài vòng lặp, tính
+   1 lần trên `scan_frame.cloud`. Vừa đúng hơn (nhất quán giữa các map — RANSAC
+   có yếu tố ngẫu nhiên) vừa nhanh hơn ~15% (N=4: ~0.87s → 0.74s).
+
+**Kết quả thật sau khi sửa** (N=4, max_distance_m=4, threshold=0.5):
+
+| scan | F1 trước | F1 sau |
+|---|---|---|
+| 50 | 0.254 | **0.273** |
+| 100 | 0.469 | **0.506** |
+| 150 | 0.182 | **0.203** |
+| 200 | 0.202 | 0.200 |
+| 250 | 0.175 | **0.192** |
+| **trung bình** | **0.256** | **0.275** |
+
+Tăng ở 4/5 scan, 1 scan đi ngang. Recall giảm nhẹ ở vài scan (một số điểm dynamic
+thật sát mặt đất bị RANSAC coi là ground → mất) nhưng precision tăng bù lại nhiều
+hơn.
+
+### 12.6. Hướng đã LOẠI BỎ — threshold thích ứng theo range
+
+Mục 10.3 từng đề xuất "threshold thích ứng trong `discrepancy.cpp`". Đo phân bố
+FP theo khoảng cách tới sensor (scan 150):
+
+| range (m) | 0-5 | 5-10 | 10-15 | 15-20 | 20-30 | 30-40 | 40-60 | 60+ |
+|---|---|---|---|---|---|---|---|---|
+| % của FP | 6.3 | 17.1 | **26.2** | 18.0 | 11.7 | 6.7 | 9.3 | 4.8 |
+
+FP phân bố đều, đỉnh ở 10-15m (không phải ở xa). Khoảng cách trung bình: FP =
+20.8m, TP = **27.1m** — điểm dynamic thật còn XA HƠN điểm báo nhầm.
+
+→ Nới threshold theo range sẽ giết TP nhiều hơn FP. **Gạch hướng này khỏi danh
+sách việc tồn đọng.**
+
+### 12.7. Vegetation được xử lý thế nào trong literature? (câu hỏi đặt ra khi bàn giao)
+
+Vegetation là vấn đề đã được nhận diện rõ trong SLAM/mapping dài hạn. Các hướng
+chính (ghi lại để tham khảo, CHƯA áp dụng cái nào):
+
+**(a) Removert gốc — multi-resolution + "revert" (Kim & Kim, IROS 2020).**
+Đây là điều đáng chú ý nhất: `mini_removert` hiện chỉ implement nửa đầu của
+thuật toán gốc. Tên đầy đủ là *"Remove, then Revert"* — sau bước remove hung hãn
+(chấp nhận nhiều FP), có bước **revert** khôi phục lại các điểm static bị xoá
+oan, dùng bằng chứng từ range image ở **độ phân giải THÔ hơn**. Ở độ phân giải
+thô, mỗi pixel gộp nhiều điểm nên nhiễu do bề mặt xốp/lệch nhỏ bị trung bình hoá
+đi. Chính cơ chế này là câu trả lời của Removert gốc cho đúng vấn đề vegetation
+đang gặp. → Hướng cải tiến tiềm năng nhất, và trung thành với thiết kế gốc nhất.
+
+**(b) ERASOR (Lim et al., ICRA 2021) — so sánh THỐNG KÊ theo bin, không theo tia.**
+Chia không gian thành các bin toạ độ cực quanh robot (R-POD), rồi so sánh **tỷ lệ
+chiều cao bị chiếm** giữa scan và map trong từng bin (Scan Ratio Test), thay vì
+so range của từng tia. Thống kê phân bố theo bin ít nhạy cảm hơn nhiều với việc
+tia laser trúng đúng chiếc lá nào. Kèm R-GPF (ground plane fitting theo từng
+vùng) thay cho RANSAC toàn cục.
+
+**(c) Patchwork / Patchwork++ (Lim et al., RA-L 2021 / IROS 2022) — ground
+segmentation theo vùng đồng tâm.** Chia mặt đất thành các vành khuyên × quạt,
+fit mặt phẳng RIÊNG cho từng bin. Giải quyết trực tiếp đúng 2 vấn đề đo được ở
+mục 12.3: vỉa hè ở độ cao khác (mỗi bin có mặt phẳng riêng) và cỏ/bụi thấp bị
+nuốt (kiểm tra độ dày/độ phẳng dọc trong bin sẽ loại bin quá "xù").
+
+**(d) Đặc trưng hình học cục bộ (eigenvalue-based) — proxy rẻ nhất, dễ implement
+nhất.** Tính ma trận hiệp phương sai của lân cận mỗi điểm (kNN hoặc bán kính),
+lấy 3 trị riêng λ1≥λ2≥λ3, rồi suy ra: *linearity* = (λ1-λ2)/λ1, *planarity* =
+(λ2-λ3)/λ1, *scattering* = λ3/λ1. Vegetation có **scattering cao** (điểm tán ra
+3 chiều), còn tường/mặt đường có planarity cao, cột/thân cây có linearity cao.
+Dùng scattering làm cờ "bề mặt không đáng tin" → bỏ qua hoặc nâng ngưỡng cho các
+điểm đó. Tham khảo: Demantké et al. 2011, Weinmann et al. 2015.
+
+**(e) Ngữ nghĩa (semantic) — dùng mạng phân loại điểm.** RangeNet++, SalsaNext,
+Cylinder3D... gán class cho từng điểm; vegetation thành một class riêng, có chính
+sách xử lý riêng. Thực hành phổ biến trong lifelong mapping: chia bản đồ thành
+nhiều tầng theo độ ổn định — (1) kết cấu vĩnh viễn (nhà, mặt đường), (2) bán tĩnh
+(xe đỗ), (3) biến dạng/không ổn định (vegetation), (4) động thật. SemanticKITTI
+sinh ra chính là để phục vụ hướng này.
+
+**(f) Mô hình xác suất tồn tại thay cho nhị phân static/dynamic.** Ví dụ
+persistence filter (Rosen, Mason, Leonard, ICRA 2016) dùng phân tích sống sót
+(survival analysis) để gán cho mỗi feature một xác suất "còn tồn tại". Vegetation
+sẽ có persistence thấp → bị giảm trọng số dần, thay vì bị xoá cứng một lần.
+
+**(g) Nhất quán không-thời gian của không gian trống.** Ví dụ Dynablox (Schmid
+et al., RA-L 2023): chỉ kết luận dynamic khi có bằng chứng nhất quán rằng vùng
+đó từng được quan sát là TRỐNG. Vegetation bị trúng tia lúc có lúc không sẽ không
+tích luỹ đủ bằng chứng nhất quán → tự nhiên bị loại. Không cần mạng semantic.
+
+**(h) Đa hồi (multi-echo/multi-return) — mẹo phần cứng.** LiDAR nhiều hồi trả về
+nhiều echo cho một tia khi xuyên qua tán lá, còn bề mặt cứng chỉ trả một. Đây là
+tín hiệu phân biệt vegetation gần như miễn phí. Velodyne HDL-64E trong KITTI chỉ
+có single return nên không dùng được ở đây, nhưng **đáng kiểm tra khi chuyển sang
+dữ liệu Go2 thật** (một số dòng Livox có hỗ trợ).
+
+> Lưu ý: các tham chiếu trên ghi theo trí nhớ, nên **kiểm tra lại tên/năm trước
+> khi trích dẫn chính thức**. Nếu có paper cụ thể muốn đối chiếu, đưa link/PDF
+> để đọc trực tiếp.
+
+**Xếp hạng đề xuất theo tỷ lệ lợi ích/công sức cho `mini_removert`:**
+1. **(a) revert stage đa độ phân giải** — đúng thiết kế gốc, nhắm trúng vegetation,
+   không cần thư viện ngoài.
+2. **(d) scattering từ trị riêng** — rẻ, ~50 dòng, dùng ngay PCL có sẵn.
+3. **(c) Patchwork++** — thay `ground_filter.cpp`, có source công khai, nhưng chỉ
+   cứu được ~14% FP nên ưu tiên thấp hơn dù nghe hấp dẫn.
+
+### 12.8. Script chẩn đoán
+
+Ba script dùng cho điều tra này đặt ở thư mục tạm (`$CLAUDE_JOB_DIR/tmp`), KHÔNG
+commit vì chỉ dùng một lần: `diag_ground.py` (RANSAC + so GT + phân tích class
+gom nhầm), `diag_fp.py` (thành phần FP theo class), `diag_range.py` (FP/TP theo
+khoảng cách + ước tính lợi ích khi ép ground=static). Nếu cần chạy lại, viết lại
+theo mô tả ở mục 12.1-12.6 — logic đều đơn giản, chỉ cần numpy.

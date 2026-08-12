@@ -58,6 +58,13 @@ int main(int argc, char** argv)
     // Đếm số lần mỗi điểm THỰC SỰ được quan sát bởi 1 map (mẫu số động, thay cho map_indices.size() cố định)
     std::vector<int> observed_count(scan_frame.cloud->points.size(), 0);
 
+    // Ground mask của scan: tính MỘT LẦN ngoài vòng lặp, không tính lại mỗi map.
+    // Ground membership bất biến qua phép biến đổi cứng (phép quay/tịnh tiến bảo toàn
+    // khoảng cách điểm→mặt phẳng), nên mask trên scan_frame.cloud và trên
+    // scan_in_map_frame là như nhau — tính lại mỗi vòng vừa thừa vừa gây thiếu nhất
+    // quán (RANSAC có yếu tố ngẫu nhiên). Thứ tự điểm không đổi nên index vẫn khớp.
+    auto scan_ground_mask = ground_filter::detectGroundMask(scan_frame.cloud);
+
     for (int map_idx : map_indices)
     {
         snprintf(buf, sizeof(buf), "%06d.pcd", map_idx);
@@ -68,8 +75,7 @@ int main(int argc, char** argv)
         Eigen::Matrix4f relative_pose = map_frame.pose.inverse() * scan_frame.pose;
         auto scan_in_map_frame = transform::transformPointCloud(scan_frame.cloud, relative_pose);
 
-        auto scan_ground_mask = ground_filter::detectGroundMask(scan_in_map_frame);
-        auto map_ground_mask  = ground_filter::detectGroundMask(map_frame.cloud);
+        auto map_ground_mask = ground_filter::detectGroundMask(map_frame.cloud);
 
         auto scan_image = range_image::buildRangeImage(
             scan_in_map_frame, height, width, v_angle_min, v_angle_max, &scan_ground_mask);
@@ -120,8 +126,18 @@ int main(int argc, char** argv)
     // nào quan sát được) thì BỎ QUA, không loại điểm đó (an toàn, tránh false dynamic).
     constexpr float vote_threshold = 0.5f;
     std::vector<int> final_dynamic_indices;
+    int skipped_ground = 0;
     for (size_t i = 0; i < vote_count.size(); ++i)
     {
+        // Điểm ground KHÔNG BAO GIỜ là dynamic. Trước đây ground chỉ bị loại khỏi
+        // range image (exclude_mask của buildRangeImage) nhưng vẫn nằm trong danh
+        // sách ứng viên: getDynamicIndices duyệt MỌI điểm rồi tra
+        // discrepancy_image[row][col], nên 1 điểm mặt đường vẫn bị gán dynamic theo
+        // phán quyết của pixel mà nó chia sẻ với vật khác. Đo trên seq04: 20.7% số
+        // điểm bị báo dynamic nằm trong mask ground, trong đó 724 FP / chỉ 21 TP.
+        // Xem HANDOFF_VIEC4.md mục 12.
+        if (scan_ground_mask[i]) { skipped_ground++; continue; }
+
         if (observed_count[i] == 0) continue; // không đủ dữ liệu để kết luận -> giữ nguyên (static)
 
         float ratio = static_cast<float>(vote_count[i]) / static_cast<float>(observed_count[i]);
@@ -136,6 +152,7 @@ int main(int argc, char** argv)
     std::cout << "\n=== Kết quả sau voting (ratio > " << vote_threshold << ", mẫu số = observed_count per-point) ===\n";
     std::cout << "static points:  " << static_cloud->points.size()  << '\n';
     std::cout << "dynamic points: " << dynamic_cloud->points.size() << '\n';
+    std::cout << "(đã ép " << skipped_ground << " điểm ground = static, không xét dynamic)\n";
 
     std::string out_path = "dynamic_indices_scan" + std::to_string(scan_idx) + ".txt";
     std::ofstream out_file(out_path);
