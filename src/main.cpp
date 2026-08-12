@@ -48,15 +48,32 @@ int main(int argc, char** argv)
     for (int idx : map_indices) std::cout << idx << " ";
     std::cout << '\n';
 
-    constexpr int height = 64;
-    constexpr int width = 900;
     constexpr float v_angle_min = -24.8f;
     constexpr float v_angle_max = 2.0f;
 
-    // Đếm số lần mỗi điểm trong scan bị đánh dấu "dynamic" qua các lần so sánh
-    std::vector<int> vote_count(scan_frame.cloud->points.size(), 0);
-    // Đếm số lần mỗi điểm THỰC SỰ được quan sát bởi 1 map (mẫu số động, thay cho map_indices.size() cố định)
-    std::vector<int> observed_count(scan_frame.cloud->points.size(), 0);
+    // === Multi-resolution: nền tảng của "remove, then revert" (Removert gốc) ===
+    // Thang MỊN thì nhạy (bắt gần hết vật động thật) nhưng nhiều báo nhầm: lệch
+    // viewpoint nhỏ hoặc bề mặt xốp (tán lá) làm 2 pixel cùng vị trí trúng 2 bề mặt
+    // vật lý khác nhau. Thang THÔ gộp nhiều điểm vào 1 pixel nên nhiễu ngẫu nhiên đó
+    // bị triệt tiêu, trong khi vật động THẬT vẫn bất nhất ở mọi thang.
+    //   levels[0]      = thang REMOVE (nhạy, quyết định ứng viên)
+    //   levels[1..n-1] = thang REVERT (chắc, phải xác nhận thì ứng viên mới được giữ)
+    // Đo trên seq04 (5 scan): vật động thật còn 98% ở thang thô, báo nhầm chỉ còn 24%
+    // -> F1 trung bình 0.275 (chỉ remove) lên 0.629 (remove + revert).
+    struct Resolution { int height; int width; const char* name; };
+    const std::vector<Resolution> levels = {
+        {64, 900, "mịn 64x900"},    // remove
+        {32, 450, "trung 32x450"},  // revert
+        {16, 225, "thô 16x225"},    // revert
+    };
+    const size_t n_levels = levels.size();
+    const size_t n_points = scan_frame.cloud->points.size();
+
+    // vote_count[level][i]:     số map kết luận điểm i là dynamic, ở thang `level`
+    // observed_count[level][i]: số map THỰC SỰ quan sát được điểm i, ở thang `level`
+    //                           (mẫu số động, thay cho map_indices.size() cố định)
+    std::vector<std::vector<int>> vote_count(n_levels, std::vector<int>(n_points, 0));
+    std::vector<std::vector<int>> observed_count(n_levels, std::vector<int>(n_points, 0));
 
     // Ground mask của scan: tính MỘT LẦN ngoài vòng lặp, không tính lại mỗi map.
     // Ground membership bất biến qua phép biến đổi cứng (phép quay/tịnh tiến bảo toàn
@@ -77,47 +94,63 @@ int main(int argc, char** argv)
 
         auto map_ground_mask = ground_filter::detectGroundMask(map_frame.cloud);
 
-        auto scan_image = range_image::buildRangeImage(
-            scan_in_map_frame, height, width, v_angle_min, v_angle_max, &scan_ground_mask);
-        auto map_image = range_image::buildRangeImage(
-            map_frame.cloud, height, width, v_angle_min, v_angle_max, &map_ground_mask);
+        // Map đã load + transform + fit ground ở trên rồi, giờ dùng lại cho MỌI thang
+        // phân giải (ground mask không phụ thuộc độ phân giải). Rẻ hơn hẳn so với
+        // chạy lại toàn bộ pipeline một lần cho mỗi thang.
+        for (size_t li = 0; li < n_levels; ++li)
+        {
+            const int h = levels[li].height;
+            const int w = levels[li].width;
 
-        auto discrepancy_image = discrepancy::computeDiscrepancy(scan_image, map_image, threshold);
+            auto scan_image = range_image::buildRangeImage(
+                scan_in_map_frame, h, w, v_angle_min, v_angle_max, &scan_ground_mask);
+            auto map_image = range_image::buildRangeImage(
+                map_frame.cloud, h, w, v_angle_min, v_angle_max, &map_ground_mask);
 
-        auto dynamic_indices = filter::getDynamicIndices(
-            scan_in_map_frame, discrepancy_image, height, width, v_angle_min, v_angle_max);
+            auto discrepancy_image = discrepancy::computeDiscrepancy(scan_image, map_image, threshold);
 
-        auto observed_indices = filter::getObservedIndices(
-            scan_in_map_frame, map_image, height, width, v_angle_min, v_angle_max);
+            auto dynamic_indices = filter::getDynamicIndices(
+                scan_in_map_frame, discrepancy_image, h, w, v_angle_min, v_angle_max);
 
-        for (int idx : dynamic_indices)
-            vote_count[idx]++;
-        for (int idx : observed_indices)
-            observed_count[idx]++;
+            auto observed_indices = filter::getObservedIndices(
+                scan_in_map_frame, map_image, h, w, v_angle_min, v_angle_max);
 
-        std::cout << "  vs map[" << map_idx << "]: " << dynamic_indices.size() << " dynamic candidates, "
-                   << observed_indices.size() << " observed\n";
+            for (int idx : dynamic_indices)
+                vote_count[li][idx]++;
+            for (int idx : observed_indices)
+                observed_count[li][idx]++;
+
+            std::cout << "  vs map[" << map_idx << "] @" << levels[li].name << ": "
+                      << dynamic_indices.size() << " dynamic candidates, "
+                      << observed_indices.size() << " observed\n";
+        }
     }
 
-    // ---- DEBUG sanity-check observed_count (tạm thời, để kiểm tra bug 3 checklist) ----
+    // ---- DEBUG sanity-check observed_count, giờ theo TỪNG thang phân giải ----
+    // (mẫu số voting phải hợp lý ở mọi thang: không được toàn 0 hoặc toàn N)
     {
         int n_maps = static_cast<int>(map_indices.size());
-        int min_obs = n_maps, max_obs = 0;
-        long sum_obs = 0;
-        int count_zero = 0, count_full = 0;
-        for (int v : observed_count)
+        std::cout << "\n[DEBUG] observed_count stats over " << n_points
+                  << " points (N=" << n_maps << " maps):\n";
+        for (size_t li = 0; li < n_levels; ++li)
         {
-            min_obs = std::min(min_obs, v);
-            max_obs = std::max(max_obs, v);
-            sum_obs += v;
-            if (v == 0) count_zero++;
-            if (v == n_maps) count_full++;
+            int min_obs = n_maps, max_obs = 0;
+            long sum_obs = 0;
+            int count_zero = 0, count_full = 0;
+            for (int v : observed_count[li])
+            {
+                min_obs = std::min(min_obs, v);
+                max_obs = std::max(max_obs, v);
+                sum_obs += v;
+                if (v == 0) count_zero++;
+                if (v == n_maps) count_full++;
+            }
+            std::cout << "  @" << levels[li].name
+                      << ": min=" << min_obs << " max=" << max_obs
+                      << " mean=" << (double)sum_obs / n_points
+                      << "  count==0: " << (100.0 * count_zero / n_points) << "%"
+                      << "  count==N: " << (100.0 * count_full / n_points) << "%\n";
         }
-        double mean_obs = observed_count.empty() ? 0.0 : (double)sum_obs / observed_count.size();
-        std::cout << "\n[DEBUG] observed_count stats over " << observed_count.size() << " points (N=" << n_maps << " maps):\n"
-                  << "  min=" << min_obs << " max=" << max_obs << " mean=" << mean_obs << "\n"
-                  << "  count==0: " << count_zero << " (" << (100.0 * count_zero / observed_count.size()) << "%)\n"
-                  << "  count==N: " << count_full << " (" << (100.0 * count_full / observed_count.size()) << "%)\n";
     }
     // ---- END DEBUG ----
 
@@ -125,9 +158,22 @@ int main(int argc, char** argv)
     // thay cho map_indices.size() cố định). Điểm nào observed_count == 0 (không map
     // nào quan sát được) thì BỎ QUA, không loại điểm đó (an toàn, tránh false dynamic).
     constexpr float vote_threshold = 0.5f;
+
+    // Điểm i có bị kết luận dynamic ở thang `li` không?
+    // observed_count == 0 nghĩa là KHÔNG map nào quan sát được điểm đó ở thang này
+    // -> "không có ý kiến", tính là KHÔNG xác nhận (an toàn: thà revert còn hơn xoá oan).
+    auto is_dynamic_at = [&](size_t li, size_t i) -> bool
+    {
+        if (observed_count[li][i] == 0) return false;
+        return static_cast<float>(vote_count[li][i]) /
+               static_cast<float>(observed_count[li][i]) > vote_threshold;
+    };
+
     std::vector<int> final_dynamic_indices;
     int skipped_ground = 0;
-    for (size_t i = 0; i < vote_count.size(); ++i)
+    int n_candidates = 0;   // qua được bước REMOVE
+    int n_reverted = 0;     // bị bước REVERT trả về static
+    for (size_t i = 0; i < n_points; ++i)
     {
         // Điểm ground KHÔNG BAO GIỜ là dynamic. Trước đây ground chỉ bị loại khỏi
         // range image (exclude_mask của buildRangeImage) nhưng vẫn nằm trong danh
@@ -138,21 +184,36 @@ int main(int argc, char** argv)
         // Xem HANDOFF_VIEC4.md mục 12.
         if (scan_ground_mask[i]) { skipped_ground++; continue; }
 
-        if (observed_count[i] == 0) continue; // không đủ dữ liệu để kết luận -> giữ nguyên (static)
+        // --- REMOVE: thang mịn quyết định ứng viên (nhạy, chấp nhận nhiều báo nhầm) ---
+        if (!is_dynamic_at(0, i)) continue;
+        n_candidates++;
 
-        float ratio = static_cast<float>(vote_count[i]) / static_cast<float>(observed_count[i]);
-        if (ratio > vote_threshold)
-            final_dynamic_indices.push_back(static_cast<int>(i));
+        // --- REVERT: MỌI thang thô hơn đều phải XÁC NHẬN thì ứng viên mới được giữ ---
+        // Đòi hỏi xác nhận ở TẤT CẢ các thang chứ không phải chỉ 1 thang: revert là
+        // bước khẳng định nên bằng chứng phải chặt. Đo trên seq04 (5 scan):
+        // luật "tất cả" cho F1=0.630, luật "ít nhất 1 thang" chỉ 0.492.
+        bool confirmed = true;
+        for (size_t li = 1; li < n_levels; ++li)
+        {
+            if (!is_dynamic_at(li, i)) { confirmed = false; break; }
+        }
+        if (!confirmed) { n_reverted++; continue; }
+
+        final_dynamic_indices.push_back(static_cast<int>(i));
     }
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr static_cloud(new pcl::PointCloud<pcl::PointXYZ>);
     pcl::PointCloud<pcl::PointXYZ>::Ptr dynamic_cloud(new pcl::PointCloud<pcl::PointXYZ>);
     filter::splitCloud(scan_frame.cloud, final_dynamic_indices, static_cloud, dynamic_cloud);
 
-    std::cout << "\n=== Kết quả sau voting (ratio > " << vote_threshold << ", mẫu số = observed_count per-point) ===\n";
+    std::cout << "\n=== Kết quả (remove @" << levels[0].name << ", revert @ "
+              << (n_levels - 1) << " thang thô hơn, vote ratio > " << vote_threshold << ") ===\n";
     std::cout << "static points:  " << static_cloud->points.size()  << '\n';
     std::cout << "dynamic points: " << dynamic_cloud->points.size() << '\n';
-    std::cout << "(đã ép " << skipped_ground << " điểm ground = static, không xét dynamic)\n";
+    std::cout << "  ép ground = static:         " << skipped_ground << '\n';
+    std::cout << "  ứng viên sau REMOVE:        " << n_candidates << '\n';
+    std::cout << "  bị REVERT (không xác nhận): " << n_reverted
+              << " (" << (n_candidates ? 100.0 * n_reverted / n_candidates : 0.0) << "%)\n";
 
     std::string out_path = "dynamic_indices_scan" + std::to_string(scan_idx) + ".txt";
     std::ofstream out_file(out_path);
