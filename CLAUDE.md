@@ -127,6 +127,15 @@ Sau bất kỳ thay đổi nào ở tầng quyết định, chạy lại đủ 5
 lần chạy cũng không đủ**: F1 dao động ±0.05 chỉ vì RANSAC fit ra mặt phẳng khác, phải đo
 trên nhiều mask (`scripts/diag_seed.py`), xem mục 11.
 
+> **0.720 KHÔNG phải tính chất của thuật toán** mà của *(seq04 + đúng 5 scan đó + đúng
+> ground mask đó)*. Trên seq 03/06/07 (đã rút sẵn về `~/kitti_data`) cùng cấu hình chỉ ra
+> **0.145-0.495**; ngay trong seq04, đổi 5 scan đem đo đã lệch 0.071. Ba nguồn phương sai:
+> ground mask ±0.05, chọn scan ±0.07, chọn sequence ±0.25 (`HANDOFF_2026-08-13.md` mục 16).
+>
+> Hệ quả thực dụng: **so sánh có cặp** (mọi nhánh dùng chung sequence/scan/mask) thì tin
+> được; **con số tuyệt đối thì không**. Đo cải tiến mới nên chạy trên ít nhất 2 sequence —
+> `scripts/run_generalization_test.py`.
+
 FP còn lại chủ yếu là ground: road 40.2% + sidewalk 18.7% + terrain 8.6% ≈ 67.5%.
 Ưu tiên tiếp theo (theo `HANDOFF_2026-08-12.md` mục 7): (1) thay `ground_filter.cpp` bằng
 Patchwork++, (2) sweep `threshold`/`vote_threshold`, (3) sweep cấu hình thang phân giải,
