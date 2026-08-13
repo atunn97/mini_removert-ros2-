@@ -81,3 +81,6 @@ results_maxdist_sweep/
 
 # python cache cua script chan doan
 __pycache__/
+
+# ket qua sweep threshold - tai tao duoc bang script
+results_threshold_sweep/
