@@ -13,7 +13,8 @@ EVALUATE_PY="/home/atun/mini_removert/scripts/evaluate.py"
 SELECT_MAPS_PY="/home/atun/mini_removert/scripts/select_maps_by_distance.py"
 
 SCAN_IDX=150
-THRESHOLD=0.5
+THRESHOLD=1.0     # doi 0.5 -> 1.0 ngay 2026-08-13 sau khi sweep: F1 TB 0.629 -> 0.691
+                  # tren 5 scan, tang 5/5. Xem HANDOFF_2026-08-13 muc 12.
 RESULTS_DIR="/home/atun/mini_removert/results_maxdist_sweep"
 
 mkdir -p "$RESULTS_DIR"

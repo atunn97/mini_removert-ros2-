@@ -15,7 +15,8 @@ SELECT_MAPS_PY="/home/atun/mini_removert/scripts/select_maps_by_distance.py"
 # ---------------------------------------------------------
 
 SCAN_IDX=150
-THRESHOLD=0.5
+THRESHOLD=1.0     # doi 0.5 -> 1.0 ngay 2026-08-13 sau khi sweep: F1 TB 0.629 -> 0.691
+                  # tren 5 scan, tang 5/5. Xem HANDOFF_2026-08-13 muc 12.
 MAX_DISTANCE_M=4.0     # ban kinh nho hon 8.0 cu - xac nhan qua maxdist-sweep tren 5 scan
                         # (50/100/150/200/250): F1 tang 5/5, xem results_maxdist_sweep/
 RESULTS_DIR="/home/atun/mini_removert/results_n_sweep_v2"

@@ -60,11 +60,18 @@ int main(int argc, char** argv)
     //   levels[1..n-1] = thang REVERT (chắc, phải xác nhận thì ứng viên mới được giữ)
     // Đo trên seq04 (5 scan): vật động thật còn 98% ở thang thô, báo nhầm chỉ còn 24%
     // -> F1 trung bình 0.275 (chỉ remove) lên 0.629 (remove + revert).
+    //
+    // Số thang đã sweep (HANDOFF_2026-08-13 mục 14, chạy ở threshold=1.0):
+    //   2 thang 0.599-0.673 | 3 thang 0.691 | 4 thang 0.720 | 5 thang 0.698 | 6 thang 0.546
+    // Phần lớn sức nặng nằm ở ĐẦU THÔ chứ không ở thang giữa: bỏ 16x225 mất rất nhiều
+    // (0.599), bỏ 32x450 gần như không mất (0.673). Nhưng thô quá thì 1 pixel nuốt cả
+    // vật động lẫn nền nên vật động bị che mất -> recall sụp (6 thang: R chỉ còn 0.459).
     struct Resolution { int height; int width; const char* name; };
     const std::vector<Resolution> levels = {
         {64, 900, "mịn 64x900"},    // remove
         {32, 450, "trung 32x450"},  // revert
         {16, 225, "thô 16x225"},    // revert
+        {8,  112, "rất thô 8x112"}, // revert
     };
     const size_t n_levels = levels.size();
     const size_t n_points = scan_frame.cloud->points.size();

@@ -116,9 +116,16 @@ sweep vì vậy `cd` vào thư mục kết quả rồi `mv` sang tên có tag.
 
 ## Mốc số liệu hiện tại (đừng để tụt)
 
-seq04, 5 scan (50/100/150/200/250), cấu hình đã chốt: **F1 trung bình 0.629**
-(P≈0.52 / R≈0.83). Trước revert stage là 0.275. Sau bất kỳ thay đổi nào ở tầng quyết định,
-chạy lại đủ 5 scan này rồi so — một scan đơn lẻ (nhất là 150) không đủ kết luận.
+seq04, 5 scan (50/100/150/200/250), cấu hình đã chốt **`N=4, max_distance_m=4.0,
+threshold=1.0, vote_threshold=0.5`, 4 thang `64×900/32×450/16×225/8×112`**:
+**F1 trung bình 0.720** (P≈0.71 / R≈0.74). Lịch sử: 0.275 (chỉ remove) → 0.629 (revert
+3 thang, thr=0.5) → 0.691 (thr=1.0) → 0.720 (thêm thang thứ 4), xem
+`HANDOFF_2026-08-13.md` mục 12 và 14.
+
+Sau bất kỳ thay đổi nào ở tầng quyết định, chạy lại đủ 5 scan này rồi so — một scan đơn lẻ
+(nhất là 150) không đủ kết luận. **Và nếu thay đổi có đụng tới ground segmentation thì một
+lần chạy cũng không đủ**: F1 dao động ±0.05 chỉ vì RANSAC fit ra mặt phẳng khác, phải đo
+trên nhiều mask (`scripts/diag_seed.py`), xem mục 11.
 
 FP còn lại chủ yếu là ground: road 40.2% + sidewalk 18.7% + terrain 8.6% ≈ 67.5%.
 Ưu tiên tiếp theo (theo `HANDOFF_2026-08-12.md` mục 7): (1) thay `ground_filter.cpp` bằng
