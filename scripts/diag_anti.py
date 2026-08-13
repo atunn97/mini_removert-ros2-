@@ -2,15 +2,15 @@
 (vi no di chuyen don dieu theo thoi gian). Nhieu/parallax thi khong co tinh chat do."""
 import numpy as np, diag_sign as d
 
-def run(scan_idx, maps):
+def run(scan_idx, maps, seed=0):
     poses=d.load_poses(d.POSES_PATH); Tr=d.load_tr(d.SEQ_DIR+'/calib.txt')
-    sx=d.load_xyz(scan_idx); n=len(sx); sp=poses[scan_idx]@Tr; sg=d.ransac_ground(sx,seed=0)
+    sx=d.load_xyz(scan_idx); n=len(sx); sp=poses[scan_idx]@Tr; sg=d.ransac_ground(sx,seed=seed)
     lab=d.load_labels(scan_idx); gt=np.isin(lab,list(d.MOVING_CLASSES))
     nlv=len(d.LEVELS)
     diffs=[np.full((len(maps),n),np.nan) for _ in range(nlv)]
     obs=[np.zeros(n,np.int32) for _ in range(nlv)]
     for mi_,m in enumerate(maps):
-        mx=d.load_xyz(m); T=np.linalg.inv(poses[m]@Tr)@sp; sim=d.transform(sx,T); mg=d.ransac_ground(mx,seed=0)
+        mx=d.load_xyz(m); T=np.linalg.inv(poses[m]@Tr)@sp; sim=d.transform(sx,T); mg=d.ransac_ground(mx,seed=seed)
         for li,(h,w) in enumerate(d.LEVELS):
             si,row,col,val=d.build_range_image(sim,h,w,sg); mimg,_,_,_=d.build_range_image(mx,h,w,mg)
             px=row*w+col; s=np.where(val,si[px],np.inf); mp=np.where(val,mimg[px],np.inf)

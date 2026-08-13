@@ -98,6 +98,41 @@ def ransac_ground(xyz, seed=0):
     return np.abs(xyz @ nrm + d) <= GROUND_DIST_THR
 
 
+def ransac_ground_pcl(xyz, seed=0, prob=0.99):
+    """Giong ransac_ground nhung co DUNG SOM theo xac suat, dung nhu
+    pcl::RandomSampleConsensus::computeModel:
+        k = log(1-prob) / log(1 - w^3),  w = ty le inlier tot nhat hien tai
+    Voi w ~ 0.5 thi k ~ 35 -> PCL THUC TE chi chay ~35 vong, khong phai 200.
+    Giu lai de doi chieu; ket luan o HANDOFF_2026-08-13 muc 11: dung ham nao cung
+    khong lam mo phong khop C++ duoc, vi F1 qua nhay voi ground mask."""
+    rng = np.random.default_rng(seed)
+    n = len(xyz)
+    best, best_cnt, k, it = None, -1, np.inf, 0
+    while it < k and it < GROUND_ITERS:
+        i = rng.choice(n, 3, replace=False)
+        p0, p1, p2 = xyz[i]
+        nrm = np.cross(p1 - p0, p2 - p0)
+        nn = np.linalg.norm(nrm)
+        if nn > 1e-9:
+            nrm = nrm / nn
+            d_ = -nrm @ p0
+            inl = np.abs(xyz @ nrm + d_) <= GROUND_DIST_THR
+            c = int(inl.sum())
+            if c > best_cnt:
+                best_cnt, best = c, inl
+                w = best_cnt / n
+                p_no = 1.0 - w ** 3
+                if 0.0 < p_no < 1.0:
+                    k = np.log(1.0 - prob) / np.log(p_no)
+        it += 1
+    pts = xyz[best]
+    centroid = pts.mean(axis=0)
+    _, _, vt = np.linalg.svd(pts - centroid, full_matrices=False)
+    nrm = vt[-1]
+    d_ = -nrm @ centroid
+    return np.abs(xyz @ nrm + d_) <= GROUND_DIST_THR
+
+
 def project(xyz, h, w):
     """Ban sao cua range_image::projectToPixel (vectorised)."""
     v_min, v_max = np.deg2rad(V_MIN_DEG), np.deg2rad(V_MAX_DEG)
