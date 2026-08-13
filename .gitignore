@@ -78,3 +78,6 @@ echo "results_n_sweep_v2/" >> .gitignore
 results_n_sweep/
 results_n_sweep_v2/
 results_maxdist_sweep/
+
+# python cache cua script chan doan
+__pycache__/
