@@ -17,25 +17,13 @@ std::vector<int> getDynamicIndices(
     std::vector<int> dynamic_indices;
     float v_min = vertical_angle_min_deg * M_PI / 180.0f;
     float v_max = vertical_angle_max_deg * M_PI / 180.0f;
-    float v_span = v_max - v_min;
 
     for (int i = 0; i < (int)scan_cloud->points.size(); ++i)
     {
-        const auto& point = scan_cloud->points[i];
-        float distance = std::sqrt(point.x*point.x + point.y*point.y + point.z*point.z);
-        if (distance < 0.1f) continue;
+        auto pixel = range_image::projectToPixel(scan_cloud->points[i], height, width, v_min, v_max);
+        if (!pixel.valid) continue;
 
-        float vertical_angle = std::atan2(point.z, std::sqrt(point.x*point.x + point.y*point.y));
-        float horizontal_angle = std::atan2(point.y, point.x);
-
-        if (vertical_angle < v_min || vertical_angle > v_max) continue;
-
-        int row = static_cast<int>((vertical_angle - v_min) / v_span * height);
-        int col = static_cast<int>((horizontal_angle + M_PI) / (2.0f * M_PI) * width);
-        row = std::clamp(row, 0, height - 1);
-        col = std::clamp(col, 0, width - 1);
-
-        float disc = discrepancy_image[row][col];
+        float disc = discrepancy_image[pixel.row][pixel.col];
         if (std::isfinite(disc) && disc > 0.0f)
             dynamic_indices.push_back(i);
     }

@@ -59,10 +59,14 @@ python3 scripts/evaluate.py \
 ```
 
 Script chẩn đoán (mô phỏng lại pipeline bằng numpy, đọc thẳng `.bin`+`.label`, **không**
-đụng C++ — dùng để kiểm chứng giả thuyết trước khi sửa code):
-`scripts/diag_sign.py <scan_idx> <map_idx...>` và `scripts/diag_anti.py`.
+đụng C++ — dùng để kiểm chứng giả thuyết trước khi sửa code): `scripts/diag_sign.py
+<scan_idx> <map_idx...>`, `diag_anti.py`, `diag_seed.py`, `diag_zero_tp.py <seq> <scan>...`,
+`diag_pixel_bleed.py [seq...] [--seeds K]`.
 Lưu ý mô phỏng chưa khớp C++ vì RANSAC fit ra mặt phẳng khác (F1 0.746 vs 0.623 ở scan 150)
 — chỉ dùng để so sánh TƯƠNG ĐỐI giữa các luật, xem `HANDOFF_2026-08-13.md` mục 7.
+Ngược lại, **binary C++ thì tiền định**: 3 lần chạy cùng input ra output giống từng byte
+(`HANDOFF_2026-08-14.md` mục 11) — nên C++ hiện KHÔNG có cách sinh ground mask khác, và
+mọi so sánh có cặp A/B trong C++ là sạch tuyệt đối.
 
 Sweep (mỗi script tự lo cả 3 bước cho nhiều cấu hình, ghi `summary.txt`):
 `scripts/run_n_sweep_v2.sh` (sweep N), `scripts/run_maxdist_sweep.sh` (sweep `max_distance_m`).
@@ -125,7 +129,9 @@ threshold=1.0, vote_threshold=0.5`, 4 thang `64×900/32×450/16×225/8×112`**:
 Sau bất kỳ thay đổi nào ở tầng quyết định, chạy lại đủ 5 scan này rồi so — một scan đơn lẻ
 (nhất là 150) không đủ kết luận. **Và nếu thay đổi có đụng tới ground segmentation thì một
 lần chạy cũng không đủ**: F1 dao động ±0.05 chỉ vì RANSAC fit ra mặt phẳng khác, phải đo
-trên nhiều mask (`scripts/diag_seed.py`), xem mục 11.
+trên nhiều mask (`scripts/diag_seed.py`), xem mục 11. Quy tắc này **hiện chỉ thực thi được
+trong Python** — C++ tiền định, chưa có `--ground-seed` (đề bài B, `HANDOFF_2026-08-14.md`
+mục 12).
 
 > **0.720 KHÔNG phải tính chất của thuật toán** mà của *(seq04 + đúng 5 scan đó + đúng
 > ground mask đó)*. Trên seq 03/06/07 (đã rút sẵn về `~/kitti_data`) cùng cấu hình chỉ ra
@@ -137,20 +143,40 @@ trên nhiều mask (`scripts/diag_seed.py`), xem mục 11.
 > `scripts/run_generalization_test.py`.
 
 FP còn lại chủ yếu là ground: road 40.2% + sidewalk 18.7% + terrain 8.6% ≈ 67.5%.
-Ưu tiên tiếp theo (theo `HANDOFF_2026-08-12.md` mục 7): (1) thay `ground_filter.cpp` bằng
-Patchwork++, (2) sweep `threshold`/`vote_threshold`, (3) sweep cấu hình thang phân giải,
-(4) test trên sequence khác, (5) map tích luỹ thay vì 1 scan thô.
+
+**Giới hạn gốc của thuật toán (đã đo, `HANDOFF_2026-08-14.md`):** nó phân biệt động/tĩnh
+bằng **độ lớn** chênh lệch range, nên **mù với vật chậm hơn nhiễu nền**. Tốc độ vật ↔ F1 có
+r = 0.731 trên 20 scan; vật < 0.6 m/frame cho F1 TB 0.148, ≥ 0.6 thì 0.533. seq04 tốt chỉ vì
+vật ở đó chạy 1.3-1.7 m/frame. **Khi báo cáo F1, ghi kèm tốc độ vật động trung bình** — không
+có nó thì F1 hai sequence không so được với nhau.
+
+Ưu tiên tiếp theo (danh sách CHỐT ở `HANDOFF_2026-08-14.md` mục 12, đề bài A-G):
+(1) **map tích luỹ** — hạng 1, thiết kế đã đo sẵn ở mục 10 (`t_min` mới là núm chính, không
+phải `R`); (2) **Patchwork++** thay `ground_filter.cpp`; (3) một mặt phẳng ground dùng chung
+cho scan+map; (4) đưa `vote_threshold`/thang/`ground_seed` ra dòng lệnh. Đã LÀM XONG: sweep
+`threshold`/`vote_threshold`/thang phân giải, test đa sequence, điều tra 3 scan 0-TP.
+Đã BÁC BỎ: luật ANTI, ràng buộc thời gian cho chọn map, tune threshold theo từng sequence,
+chặn lây nhiễm theo pixel (mục 13).
 
 ## Tài liệu bàn giao
 
-`HANDOFF_2026-08-12.md` là trạng thái hiện tại (đọc file này trước). `HANDOFF_VIEC4.md`
-là bối cảnh sâu hơn của các phiên trước, vẫn còn giá trị, không bị thay thế. Cả hai chứa
-những kết luận đã ĐO và đã BÁC BỎ (ví dụ: threshold thích ứng theo range — đã gạch, vì
-điểm động thật ở xa hơn điểm báo nhầm) — kiểm tra ở đó trước khi đề xuất lại một hướng.
+`HANDOFF_2026-08-14.md` là trạng thái hiện tại — **đọc file này trước**, mục 12 là danh sách
+đề bài đang treo. Rồi `HANDOFF_2026-08-13.md` (sweep + test đa sequence),
+`HANDOFF_2026-08-12.md`, `HANDOFF_VIEC4.md` (bối cảnh sâu, vẫn còn giá trị, không bị thay
+thế). Tất cả chứa những kết luận đã ĐO và đã BÁC BỎ (ví dụ: threshold thích ứng theo range —
+đã gạch, vì điểm động thật ở xa hơn điểm báo nhầm) — **kiểm ở đó trước khi đề xuất lại một
+hướng**, đã có 4 giả thuyết nghe rất hợp lý bị bác bỏ bằng số đo.
 
-Nguyên lý lặp lại 2 lần trong dự án, đáng nhớ: **gộp thêm bằng chứng (voting đa frame,
-revert đa thang) chỉ triệt tiêu sai số NGẪU NHIÊN; sai số HỆ THỐNG (parallax do baseline
-xa, lệch mặt đường) phải sửa tận gốc.**
+Ba nguyên lý lặp lại trong dự án, đáng nhớ:
+
+1. **Gộp thêm bằng chứng** (voting đa frame, revert đa thang) chỉ triệt tiêu sai số **NGẪU
+   NHIÊN**; sai số **HỆ THỐNG** (parallax do baseline xa, lệch mặt đường) phải sửa tận gốc.
+2. **Bằng chứng phải có CẤU TRÚC, không chỉ có ĐỘ LỚN** — gặp lại 3 lần (luật ANTI, vật
+   chậm ở mục 3.3, persistence cho lifelong).
+3. **Hai ảnh phải đi qua CÙNG một phép rút gọn.** REVERT thang thô chạy được không phải vì
+   "trung bình hoá nhiễu" mà vì `min()` làm lệch **cả hai** ảnh y như nhau nên độ lệch triệt
+   tiêu. So một đại lượng đã qua `min()` với một đại lượng chưa qua thì FP nổ 53 lần
+   (`HANDOFF_2026-08-14.md` mục 13.4).
 
 Thư mục `results_*/`, `build/`, `install/`, `log/` đều nằm trong `.gitignore` — kết quả
 sweep tái tạo được bằng script, không commit.

@@ -13,6 +13,7 @@
 #include <fstream>
 #include <algorithm>
 #include <vector>
+#include <sstream>
 
 int main(int argc, char** argv)
 {
@@ -28,11 +29,37 @@ int main(int argc, char** argv)
     std::string calib_path = argv[3];
     int scan_idx = std::stoi(argv[4]);
     float threshold = std::stof(argv[5]);
-
+    std::string levels_arg = "64x900,32x450,16x225,8x112";
+    float vote_threshold = 0.5f;
     std::vector<int> map_indices;
-    for (int i = 6; i < argc; ++i)
-        map_indices.push_back(std::stoi(argv[i]));
-
+    for (int i = 6; i < argc; )
+{
+    std::string arg = argv[i];// --- Nhánh 1: cờ đã biết ---
+    if (arg == "--vote-threshold")
+    {   
+        if (i + 1 >= argc) { std::cerr << "thieu gia tri sau " << arg << '\n'; return 1; }
+        vote_threshold = std::stof(argv[i + 1]);
+        i += 2;
+    }
+      else if (arg == "--levels")
+    {
+        if (i + 1 >= argc) { std::cerr << "thieu gia tri sau " << arg << '\n'; return 1; }
+        levels_arg = argv[i + 1];
+        i += 2;
+    }
+    // --- Nhánh 2: bắt đầu bằng "--" nhưng không khớp nhánh 1 -> gõ nhầm ---
+    else if (arg.rfind("--", 0) == 0)
+    {
+        std::cerr << "co la: " << arg << '\n';
+        return 1;
+    }
+    // --- Nhánh 3: không phải cờ -> map_idx ---
+    else
+    {
+        map_indices.push_back(std::stoi(arg));
+        i += 1;
+    }
+}
     auto poses = loadKittiPoses(poses_path);
     Eigen::Matrix4f Tr = loadKittiTr(calib_path);
 
@@ -66,13 +93,22 @@ int main(int argc, char** argv)
     // Phần lớn sức nặng nằm ở ĐẦU THÔ chứ không ở thang giữa: bỏ 16x225 mất rất nhiều
     // (0.599), bỏ 32x450 gần như không mất (0.673). Nhưng thô quá thì 1 pixel nuốt cả
     // vật động lẫn nền nên vật động bị che mất -> recall sụp (6 thang: R chỉ còn 0.459).
-    struct Resolution { int height; int width; const char* name; };
-    const std::vector<Resolution> levels = {
-        {64, 900, "mịn 64x900"},    // remove
-        {32, 450, "trung 32x450"},  // revert
-        {16, 225, "thô 16x225"},    // revert
-        {8,  112, "rất thô 8x112"}, // revert
-    };
+    struct Resolution { int height; int width; std::string name; };  // KHÔI PHỤC, name đổi kiểu
+    std::vector<Resolution> levels;                                   // rỗng, KHÔNG const
+
+    std::stringstream ss(levels_arg);
+    std::string tok;
+    while (std::getline(ss, tok, ','))
+    {
+        size_t xpos = tok.find('x');
+        if (xpos == std::string::npos) { std::cerr << "--levels sai dinh dang (thieu 'x'): " << tok << '\n'; return 1; }   // bẫy 64-900
+
+        int h = std::stoi(tok.substr(0, xpos));       // chỉ MỘT cặp h/w
+        int w = std::stoi(tok.substr(xpos + 1));
+        if (h <= 0 || w <= 0) { std::cerr << "--levels co kich thuoc khong hop le: " << tok << '\n'; return 1; }   
+        levels.push_back({h, w, std::to_string(h) + "x" + std::to_string(w)});
+    }
+    if (levels.empty()) { std::cerr << "--levels rong\n"; return 1; }
     const size_t n_levels = levels.size();
     const size_t n_points = scan_frame.cloud->points.size();
 
@@ -164,8 +200,6 @@ int main(int argc, char** argv)
     // Voting: per-point ratio = vote_count[i] / observed_count[i] (mẫu số động,
     // thay cho map_indices.size() cố định). Điểm nào observed_count == 0 (không map
     // nào quan sát được) thì BỎ QUA, không loại điểm đó (an toàn, tránh false dynamic).
-    constexpr float vote_threshold = 0.5f;
-
     // Điểm i có bị kết luận dynamic ở thang `li` không?
     // observed_count == 0 nghĩa là KHÔNG map nào quan sát được điểm đó ở thang này
     // -> "không có ý kiến", tính là KHÔNG xác nhận (an toàn: thà revert còn hơn xoá oan).
