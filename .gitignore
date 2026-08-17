@@ -84,3 +84,6 @@ __pycache__/
 
 # ket qua sweep threshold - tai tao duoc bang script
 results_threshold_sweep/
+
+# Output cua binary: ghi ra CWD moi lan chay, tai tao duoc bang script
+dynamic_indices_scan*.txt

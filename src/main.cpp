@@ -31,6 +31,7 @@ int main(int argc, char** argv)
     float threshold = std::stof(argv[5]);
     std::string levels_arg = "64x900,32x450,16x225,8x112";
     float vote_threshold = 0.5f;
+    int ground_seed = 0;
     std::vector<int> map_indices;
     for (int i = 6; i < argc; )
 {
@@ -41,10 +42,16 @@ int main(int argc, char** argv)
         vote_threshold = std::stof(argv[i + 1]);
         i += 2;
     }
-      else if (arg == "--levels")
+    else if (arg == "--levels")
     {
         if (i + 1 >= argc) { std::cerr << "thieu gia tri sau " << arg << '\n'; return 1; }
         levels_arg = argv[i + 1];
+        i += 2;
+    }
+    else if  (arg == "--ground-seed")
+    {   
+        if (i + 1 >= argc) { std::cerr << "thieu gia tri sau " << arg << '\n'; return 1; }
+        ground_seed = std::stoi(argv[i + 1]);
         i += 2;
     }
     // --- Nhánh 2: bắt đầu bằng "--" nhưng không khớp nhánh 1 -> gõ nhầm ---
@@ -123,8 +130,15 @@ int main(int argc, char** argv)
     // khoảng cách điểm→mặt phẳng), nên mask trên scan_frame.cloud và trên
     // scan_in_map_frame là như nhau — tính lại mỗi vòng vừa thừa vừa gây thiếu nhất
     // quán (RANSAC có yếu tố ngẫu nhiên). Thứ tự điểm không đổi nên index vẫn khớp.
-    auto scan_ground_mask = ground_filter::detectGroundMask(scan_frame.cloud);
-
+    auto scan_ground_mask = ground_filter::detectGroundMask(scan_frame.cloud, ground_seed);
+    // DEBUG: kích cỡ ground mask — dùng để chấm `--ground-seed` (mốc seq04 ~50%, mục 3.1
+    // phiên 12/8). In CẢ số đếm lẫn phần trăm: số đếm là bằng chứng gốc, còn phần trăm mới
+    // là thứ so sánh được giữa các scan (5 scan mốc lệch nhau tới 1.455 điểm) và giữa các
+    // cảm biến (Livox L1 của Go2 chỉ cho ~20k điểm/scan, số đếm tuyệt đối vô nghĩa ở đó).
+    const auto n_ground = std::count(scan_ground_mask.begin(), scan_ground_mask.end(), true);
+    const size_t n_scan_points = scan_frame.cloud->points.size();
+    std::cout << "ground seed=" << ground_seed << ": " << n_ground << "/" << n_scan_points
+              << " diem (" << 100.0f * n_ground / n_scan_points << "%)\n";
     for (int map_idx : map_indices)
     {
         snprintf(buf, sizeof(buf), "%06d.pcd", map_idx);
@@ -135,7 +149,7 @@ int main(int argc, char** argv)
         Eigen::Matrix4f relative_pose = map_frame.pose.inverse() * scan_frame.pose;
         auto scan_in_map_frame = transform::transformPointCloud(scan_frame.cloud, relative_pose);
 
-        auto map_ground_mask = ground_filter::detectGroundMask(map_frame.cloud);
+        auto map_ground_mask = ground_filter::detectGroundMask(map_frame.cloud, ground_seed);
 
         // Map đã load + transform + fit ground ở trên rồi, giờ dùng lại cho MỌI thang
         // phân giải (ground mask không phụ thuộc độ phân giải). Rẻ hơn hẳn so với

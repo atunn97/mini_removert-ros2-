@@ -17,6 +17,14 @@ Vai trò mong muốn của Claude ở đây là **test + review + giảng giải
   cách các phiên trước đã bác bỏ 3 giả định sai về RANSAC mà không đụng vào C++.
 - Kết luận sau mỗi lần kiểm tra thì **ghi vào `HANDOFF_<ngày>.md`** cho phiên sau.
 - Giải thích luôn kèm ví dụ số cụ thể (bao nhiêu điểm/pixel, lệch bao nhiêu mét).
+- **Khi đã chốt sẽ sửa code thì mặc định CHỦ REPO TỰ CODE, Claude hướng dẫn** (xác nhận
+  17/8, sau khi làm `--ground-seed`). Công thức: giải thích cơ chế trước (kèm bằng chứng
+  đọc từ source thật, kể cả source thư viện) → danh sách việc đánh số, mỗi việc có điểm
+  dừng kiểm tra riêng → trỏ vào một khối code CÓ SẴN làm khuôn và nói rõ sửa đúng chỗ nào,
+  thay vì viết sẵn đoạn code → nói trước cạm bẫy kèm hậu quả → khi báo xong thì đọc
+  `git diff`, tự build, tự chạy test, liệt kê lỗi theo `file:dòng`. Chỉ tự viết code khi
+  việc thực sự gấp và chủ repo nói rõ. Lỗi biên dịch là cơ hội dạy quy tắc ngôn ngữ đằng
+  sau, không chỉ đưa dòng đúng.
 
 ## Dự án là gì
 
@@ -62,14 +70,23 @@ Script chẩn đoán (mô phỏng lại pipeline bằng numpy, đọc thẳng `.
 đụng C++ — dùng để kiểm chứng giả thuyết trước khi sửa code): `scripts/diag_sign.py
 <scan_idx> <map_idx...>`, `diag_anti.py`, `diag_seed.py`, `diag_zero_tp.py <seq> <scan>...`,
 `diag_pixel_bleed.py [seq...] [--seeds K]`.
+`scripts/src_quality.py <seq> <scan...> [--grid R:t,...]` khác nhóm trên: nó **không** mô
+phỏng pipeline hiện tại mà chấm điểm **bộ frame nguồn cho map tích luỹ** (đề bài E) —
+gộp nguồn → voxel 0.2 → hệ scan → 1 range image → AUC. Dùng nó TRƯỚC khi viết C++ cho E:
+AUC thấp thì đừng viết; AUC cao mà C++ ra 0 thì lỗi ở cài đặt (`HANDOFF_2026-08-17.md`).
 Lưu ý mô phỏng chưa khớp C++ vì RANSAC fit ra mặt phẳng khác (F1 0.746 vs 0.623 ở scan 150)
 — chỉ dùng để so sánh TƯƠNG ĐỐI giữa các luật, xem `HANDOFF_2026-08-13.md` mục 7.
 Ngược lại, **binary C++ thì tiền định**: 3 lần chạy cùng input ra output giống từng byte
-(`HANDOFF_2026-08-14.md` mục 11) — nên C++ hiện KHÔNG có cách sinh ground mask khác, và
-mọi so sánh có cặp A/B trong C++ là sạch tuyệt đối.
+(`HANDOFF_2026-08-14.md` mục 11), vì `pcl::SACSegmentation` mặc định seed cứng `12345u`
+(`/usr/include/pcl-1.14/pcl/sample_consensus/sac_model.h:96-99`). Hệ quả: mọi so sánh có
+cặp A/B trong C++ là sạch tuyệt đối. Muốn một ground mask HỢP LỆ KHÁC thì dùng
+**`--ground-seed k`** (xáo thứ tự vector index rồi `setIndices` — `ground_filter.cpp`), và
+đo bằng `scripts/run_seed_sweep.py`.
 
 Sweep (mỗi script tự lo cả 3 bước cho nhiều cấu hình, ghi `summary.txt`):
-`scripts/run_n_sweep_v2.sh` (sweep N), `scripts/run_maxdist_sweep.sh` (sweep `max_distance_m`).
+`scripts/run_n_sweep_v2.sh` (sweep N), `scripts/run_maxdist_sweep.sh` (sweep `max_distance_m`),
+`scripts/run_seed_sweep.py` (5 scan × N ground mask, in F1 ± độ lệch — chạy sau MỌI thay đổi
+đụng tới ground; nhận `--seeds`, `--levels`, `--scans`, `--seq`).
 `run_n_sweep.sh` là bản cũ chọn map theo số frame — đã bị `_v2` thay thế, đừng dùng lại.
 
 Dữ liệu (không nằm trong repo): `~/kitti_data/dataset/sequences/04/{pcd,labels,calib.txt}`
@@ -79,9 +96,11 @@ và `~/kitti_data/dataset/poses/04.txt`. `scripts/bin_to_pcd.py` convert `velody
 ## Kiến trúc
 
 `main.cpp` là toàn bộ orchestration + mọi hằng số tinh chỉnh; các module dưới `src/*/`
-đều là hàm thuần, không giữ trạng thái. Chỉ `pcd_dir/poses/calib/scan_idx/threshold/map_idx`
-là tham số dòng lệnh — thang phân giải, `vote_threshold`, FOV dọc đều **hard-code trong
-`main.cpp`**, muốn sweep thì phải sửa code hoặc viết script sinh biến thể.
+đều là hàm thuần, không giữ trạng thái. Tham số dòng lệnh gồm 5 vị trí cố định
+`pcd_dir poses calib scan_idx threshold`, rồi từ `argv[6]` là `map_idx` trộn lẫn với 3 cờ
+có tên: **`--vote-threshold`**, **`--levels 64x900,32x450,...`**, **`--ground-seed k`**
+(đề bài B, xong 17/8). Cờ lạ hoặc thiếu giá trị thì **báo lỗi và thoát**, không im lặng bỏ
+qua. FOV dọc vẫn **hard-code trong `main.cpp`**.
 
 Luồng cho mỗi map:
 
@@ -122,21 +141,29 @@ sweep vì vậy `cd` vào thư mục kết quả rồi `mv` sang tên có tag.
 
 seq04, 5 scan (50/100/150/200/250), cấu hình đã chốt **`N=4, max_distance_m=4.0,
 threshold=1.0, vote_threshold=0.5`, 4 thang `64×900/32×450/16×225/8×112`**:
-**F1 trung bình 0.720** (P≈0.71 / R≈0.74). Lịch sử: 0.275 (chỉ remove) → 0.629 (revert
-3 thang, thr=0.5) → 0.691 (thr=1.0) → 0.720 (thêm thang thứ 4), xem
-`HANDOFF_2026-08-13.md` mục 12 và 14.
+**F1 trung bình 0.707 ± 0.023** trên 6 ground mask (`--ground-seed 0..5`); riêng seed 0 —
+mask mặc định của PCL, và là mốc lịch sử hay được trích — cho **0.720**. Lịch sử: 0.275
+(chỉ remove) → 0.629 (revert 3 thang, thr=0.5) → 0.691 (thr=1.0) → 0.720 (thêm thang thứ
+4), xem `HANDOFF_2026-08-13.md` mục 12 và 14.
+
+> **0.720 là mẫu MAY, không phải giá trị đại diện** — nó cao thứ nhì trong 6 mask
+> (0.657-0.723). Khi so sánh với công trình khác hoặc báo cáo ra ngoài thì dùng
+> **0.707 ± 0.023**; 0.720 chỉ dùng làm mốc regression cho chính seed 0
+> (`HANDOFF_2026-08-17.md` mục 7.3).
 
 Sau bất kỳ thay đổi nào ở tầng quyết định, chạy lại đủ 5 scan này rồi so — một scan đơn lẻ
-(nhất là 150) không đủ kết luận. **Và nếu thay đổi có đụng tới ground segmentation thì một
-lần chạy cũng không đủ**: F1 dao động ±0.05 chỉ vì RANSAC fit ra mặt phẳng khác, phải đo
-trên nhiều mask (`scripts/diag_seed.py`), xem mục 11. Quy tắc này **hiện chỉ thực thi được
-trong Python** — C++ tiền định, chưa có `--ground-seed` (đề bài B, `HANDOFF_2026-08-14.md`
-mục 12).
+(nhất là 150) không đủ kết luận: **riêng scan 150 dao động 0.545-0.727 tuỳ ground mask**
+(biên độ 0.182, gấp ~3 lần biên độ của trung bình 5 scan), và thứ hạng giữa các scan bị
+đảo khi đổi mask. **Nếu thay đổi có đụng tới ground segmentation thì một lần chạy cũng
+không đủ**: chạy `scripts/run_seed_sweep.py` (5 scan × 6 mask, ~2 phút) thay vì chạy tay.
+**Quy tắc số: ΔF1 < 0.07 đo trên MỘT mask thì không kết luận được gì** — đó là biên độ đo
+được giữa các mask trong C++ (0.066), khớp bậc với ước lượng ±0.05 từ Python trước đây.
 
 > **0.720 KHÔNG phải tính chất của thuật toán** mà của *(seq04 + đúng 5 scan đó + đúng
 > ground mask đó)*. Trên seq 03/06/07 (đã rút sẵn về `~/kitti_data`) cùng cấu hình chỉ ra
 > **0.145-0.495**; ngay trong seq04, đổi 5 scan đem đo đã lệch 0.071. Ba nguồn phương sai:
-> ground mask ±0.05, chọn scan ±0.07, chọn sequence ±0.25 (`HANDOFF_2026-08-13.md` mục 16).
+> ground mask **±0.033** (đo trong C++, `HANDOFF_2026-08-17.md` mục 7.3), chọn scan ±0.07,
+> chọn sequence ±0.25 (`HANDOFF_2026-08-13.md` mục 16).
 >
 > Hệ quả thực dụng: **so sánh có cặp** (mọi nhánh dùng chung sequence/scan/mask) thì tin
 > được; **con số tuyệt đối thì không**. Đo cải tiến mới nên chạy trên ít nhất 2 sequence —
@@ -160,8 +187,10 @@ chặn lây nhiễm theo pixel (mục 13).
 
 ## Tài liệu bàn giao
 
-`HANDOFF_2026-08-14.md` là trạng thái hiện tại — **đọc file này trước**, mục 12 là danh sách
-đề bài đang treo. Rồi `HANDOFF_2026-08-13.md` (sweep + test đa sequence),
+`HANDOFF_2026-08-17.md` là mới nhất (ngắn: dựng lại `src_quality.py`, cấu hình nguồn nên
+dùng cho đề bài E, trạng thái đề bài). Nhưng **danh sách đề bài đầy đủ vẫn ở mục 12 của
+`HANDOFF_2026-08-14.md`** — đọc cả hai trước khi làm gì. Rồi `HANDOFF_2026-08-13.md`
+(sweep + test đa sequence),
 `HANDOFF_2026-08-12.md`, `HANDOFF_VIEC4.md` (bối cảnh sâu, vẫn còn giá trị, không bị thay
 thế). Tất cả chứa những kết luận đã ĐO và đã BÁC BỎ (ví dụ: threshold thích ứng theo range —
 đã gạch, vì điểm động thật ở xa hơn điểm báo nhầm) — **kiểm ở đó trước khi đề xuất lại một
