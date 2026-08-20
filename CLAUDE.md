@@ -74,6 +74,10 @@ Script chẩn đoán (mô phỏng lại pipeline bằng numpy, đọc thẳng `.
 phỏng pipeline hiện tại mà chấm điểm **bộ frame nguồn cho map tích luỹ** (đề bài E) —
 gộp nguồn → voxel 0.2 → hệ scan → 1 range image → AUC. Dùng nó TRƯỚC khi viết C++ cho E:
 AUC thấp thì đừng viết; AUC cao mà C++ ra 0 thì lỗi ở cài đặt (`HANDOFF_2026-08-17.md`).
+Đã chạy đủ **20 scan / 4 sequence** ngày 20/8 — kết quả và **bộ 5 scan chuẩn của từng
+sequence** (giao thức §16.1 phiên 13/8, sinh bằng `pick_scans()` trong
+`run_generalization_test.py`) nằm ở `HANDOFF_2026-08-20.md` mục 2-3; dùng đúng bộ đó thì
+phép đo mới **so cặp** được với các mốc cũ.
 Lưu ý mô phỏng chưa khớp C++ vì RANSAC fit ra mặt phẳng khác (F1 0.746 vs 0.623 ở scan 150)
 — chỉ dùng để so sánh TƯƠNG ĐỐI giữa các luật, xem `HANDOFF_2026-08-13.md` mục 7.
 Ngược lại, **binary C++ thì tiền định**: 3 lần chạy cùng input ra output giống từng byte
@@ -178,18 +182,35 @@ vật ở đó chạy 1.3-1.7 m/frame. **Khi báo cáo F1, ghi kèm tốc độ 
 có nó thì F1 hai sequence không so được với nhau.
 
 Ưu tiên tiếp theo (danh sách CHỐT ở `HANDOFF_2026-08-14.md` mục 12, đề bài A-G):
-(1) **map tích luỹ** — hạng 1, thiết kế đã đo sẵn ở mục 10 (`t_min` mới là núm chính, không
-phải `R`); (2) **Patchwork++** thay `ground_filter.cpp`; (3) một mặt phẳng ground dùng chung
-cho scan+map; (4) đưa `vote_threshold`/thang/`ground_seed` ra dòng lệnh. Đã LÀM XONG: sweep
-`threshold`/`vote_threshold`/thang phân giải, test đa sequence, điều tra 3 scan 0-TP.
+(1) **map tích luỹ** — hạng 1, **bộ nguồn đã CHỐT bằng số trên 20 scan / 4 sequence**
+(`HANDOFF_2026-08-20.md`): thang bậc `R:t_min = 5:5 → 10:10 → 20:10`, đòi **≥ 8 nguồn** mới
+nhận một bậc, AUC TB **0.881** so với 0.723 của cách chọn nguồn hiện tại. Ba bậc và biên 8
+phải là **tham số dòng lệnh** — chúng đã được chỉnh trên toàn bộ dữ liệu có trên đĩa nên
+không còn tập sạch nào để tune tiếp; (2) **Patchwork++** thay `ground_filter.cpp`; (3) một
+mặt phẳng ground dùng chung cho scan+map — **tự tan biến khi làm (1)**, vì map về hệ scan thì
+không cần biến đổi mặt phẳng. Đã LÀM XONG: sweep `threshold`/`vote_threshold`/thang phân
+giải, test đa sequence, điều tra 3 scan 0-TP, đưa `vote_threshold`/thang/`ground_seed` ra
+dòng lệnh (đề bài B).
 Đã BÁC BỎ: luật ANTI, ràng buộc thời gian cho chọn map, tune threshold theo từng sequence,
-chặn lây nhiễm theo pixel (mục 13).
+chặn lây nhiễm theo pixel (mục 13), **luật một chiều thay `fabs()`** (đo lại trên 20 scan:
+AUC 1 chiều ở seq04 chỉ 0.267-0.626, seq03 chỉ 0.021-0.424).
+
+**Chế độ hỏng thứ hai, mới phát hiện 20/8** (ngoài "mù với vật chậm"): **map bị nhiễm** khi
+ego **đứng yên** trong cảnh đông. seq07/673 có 116 frame nguồn trong bán kính 5 m (xe dừng
+đèn đỏ ~12 s) trong khi dòng xe vẫn chạy qua đúng chỗ đó → map tích luỹ tích luôn **vệt** của
+vật động → nền nhiễu 1.03-2.85 m (các scan khác chỉ 0.10-0.67), AUC 0.52-0.63 ở **mọi** cấu
+hình, `t_min` vô dụng. Đây là giả định gốc của Removert lộ ra: nó ngầm cho rằng map dựng từ
+**lượt đi sạch**. Rất đáng nhớ cho Go2 (robot đứng yên trong phòng có người qua lại).
 
 ## Tài liệu bàn giao
 
-`HANDOFF_2026-08-17.md` là mới nhất (ngắn: dựng lại `src_quality.py`, cấu hình nguồn nên
-dùng cho đề bài E, trạng thái đề bài). Nhưng **danh sách đề bài đầy đủ vẫn ở mục 12 của
-`HANDOFF_2026-08-14.md`** — đọc cả hai trước khi làm gì. Rồi `HANDOFF_2026-08-13.md`
+`HANDOFF_2026-08-20.md` là mới nhất: chấm bộ nguồn cho đề bài E trên **20 scan / 4 sequence**
+— cấu hình nguồn đã chốt (mục 5 + 5b), chế độ hỏng "map bị nhiễm" (mục 6), và **danh sách
+việc đánh số + tiêu chí chấm cho bước viết C++** (mục 9). Nó **đính chính** khuyến nghị
+`R=5,t_min=5` của `HANDOFF_2026-08-17.md` mục 5 (khuyến nghị đó rút từ đúng MỘT scan, thủng
+5/5 scan ở seq04). Phần còn lại của handoff 17/8 (`--ground-seed`, biên độ ground mask 0.066)
+vẫn đứng. Nhưng **danh sách đề bài đầy đủ vẫn ở mục 12 của
+`HANDOFF_2026-08-14.md`** — đọc cả ba trước khi làm gì. Rồi `HANDOFF_2026-08-13.md`
 (sweep + test đa sequence),
 `HANDOFF_2026-08-12.md`, `HANDOFF_VIEC4.md` (bối cảnh sâu, vẫn còn giá trị, không bị thay
 thế). Tất cả chứa những kết luận đã ĐO và đã BÁC BỎ (ví dụ: threshold thích ứng theo range —
