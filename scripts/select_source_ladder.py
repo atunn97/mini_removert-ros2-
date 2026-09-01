@@ -115,7 +115,12 @@ def parse_args(argv):
         elif arg == "--min-src":
             if i + 1 >= len(argv):
                 sys.exit(f"thieu gia tri sau {arg}")
-            min_src = int(argv[i + 1])
+            try:
+                min_src = int(argv[i + 1])
+            except ValueError:
+                sys.exit(f"--min-src can so nguyen: {argv[i + 1]}")
+            if min_src < 1:
+                sys.exit(f"--min-src phai >= 1: {min_src}")
             i += 2
         elif arg.startswith("--"):
             sys.exit(f"co la: {arg}")
