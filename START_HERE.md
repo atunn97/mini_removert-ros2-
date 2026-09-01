@@ -8,7 +8,7 @@
 
 ## 🔴 HÔM NAY (cập nhật 01/09/2026)
 
-**Trạng thái:** E2 việc 3 + 4 xong, build sạch, binary cho số ĐỌC ĐƯỢC. Chưa commit.
+**Trạng thái:** E2 việc 3 + 4 xong, build sạch, binary cho số ĐỌC ĐƯỢC. Đã commit (`cec4f2c`, `8f0043c`).
 
 **Câu hỏi mở duy nhất — precision quá tệ, FP ở đâu ra?**
 
@@ -20,14 +20,22 @@ seq06/939:  P 0.062   R 0.782   F1 0.115      140 TP / 2110 FP
 
 Recall ổn — nó **tìm được** vật động. Precision sụp — nó vơ kèm quá nhiều thứ tĩnh.
 
-**Manh mối mạnh nhất đang có:** cùng một mặt phẳng ground, nhưng
-`scan = 49.8%` còn `map tích luỹ = 38.3%`. Lệch 11.4 điểm phần trăm.
-Giả thuyết: map trải dài cả trăm mét, mặt đường cong ra khỏi mặt phẳng fit tại chỗ của
-scan, phần cong quá 0.2m không bị mask → lọt vào range image như thể là vật thể.
+**Manh mối cũ ĐÃ CHẾT:** chênh lệch ground 49.8% (scan) vs 38.3% (map) hoá ra **lành tính** —
+chỉ do scan và map lấy mẫu ở phân bố bán kính khác nhau (mục 13.2 handoff). Map không bỏ sót
+mặt đường của nó.
 
-**Việc của bạn buổi tới:** chia `map_cloud` theo vành đai khoảng cách tới gốc scan, in tỷ lệ
-ground từng vành đai. Tụt dần theo khoảng cách ⇒ giả thuyết đúng.
-❌ Đã bác bỏ rồi, đừng đi lại: "hai mặt phẳng RANSAC riêng gây FP" — đã hợp nhất, số không đổi.
+❌ **Đã bác bỏ bằng số, đừng đi lại:**
+- "hai mặt phẳng RANSAC riêng gây FP" — đã hợp nhất ở việc 3, số không đổi
+- "mặt đường cong ra khỏi mặt phẳng" — `R` ra ÂM ở seq06, `R²`=0.26, vách dự báo 76m mà vách
+  thật ở 10-20m
+
+**Nghi phạm tiếp theo, chưa thử:** ngoài 30m, scan có 5.783 điểm còn map có **38.869 — gấp
+6.7 lần**. `getObservedIndices` coi một điểm scan là "quan sát được" khi map CÓ dữ liệu tại
+pixel đó. Vùng xa là nơi map dày đặc mà scan gần như không lấy mẫu nổi, và 9 điểm nhìn cách
+nhau chục mét thì ở 60-80m chúng thấy những bề mặt khác nhau. Xem mục 13.4.
+
+**Mạch CSV:** bước 1 (C++ `--csv`) và bước 2 (`add_gt_label.py`) ✅ xong. Còn bước 3 (chạy
+nhiều scan, nối lại) và bước 4 (MLP numpy). Xem mục 14.
 
 ---
 

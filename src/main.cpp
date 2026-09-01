@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <vector>
 #include <sstream>
+#include <limits>
 
 int main(int argc, char** argv)
 {
@@ -33,6 +34,7 @@ int main(int argc, char** argv)
     std::string levels_arg = "64x900,32x450,16x225,8x112";
     float vote_threshold = 0.5f;
     int ground_seed = 0;
+    std::string csv_path;          // rong = khong xuat CSV
     std::vector<int> map_indices;
     for (int i = 6; i < argc; )
 {
@@ -53,6 +55,12 @@ int main(int argc, char** argv)
     {   
         if (i + 1 >= argc) { std::cerr << "thieu gia tri sau " << arg << '\n'; return 1; }
         ground_seed = std::stoi(argv[i + 1]);
+        i += 2;
+    }
+    else if (arg == "--csv")
+    {
+        if (i + 1 >= argc) { std::cerr << "thieu gia tri sau " << arg << '\n'; return 1; }
+        csv_path = argv[i + 1];
         i += 2;
     }
     // --- Nhánh 2: bắt đầu bằng "--" nhưng không khớp nhánh 1 -> gõ nhầm ---
@@ -222,6 +230,29 @@ int main(int argc, char** argv)
     // `map_cloud` đã được đưa về hệ scan ngay ở bước gộp (`relative_pose` = scan⁻¹·map).
     // Đây đúng là chỗ bug cũ nằm: `scan_in_map_frame` đem phép "map → scan" áp lên chính
     // scan, tức áp nghịch đảo của thứ cần áp, nên hai ảnh ở hai hệ chẳng liên quan.
+
+    // === Đệm đặc trưng cho hàm xuất CSV (mục 3 HANDOFF 01/09) ===
+    // Chỉ cấp phát khi có `--csv`. Vài MB bộ nhớ thì không đáng ngại, nhưng vòng
+    // projectToPixel thêm cho MỌI điểm ở MỌI thang thì đáng — bỏ hẳn khi không xuất.
+    //
+    // `range` KHÔNG nằm trong nhóm theo thang: projectToPixel trả distance = |p|
+    // (`range_image.cpp:20`), không phụ thuộc h/w, nên bốn thang cho ra y hệt một số.
+    // Ghi bốn lần là thừa bốn cột trên 127k dòng.
+    const bool want_csv = !csv_path.empty();
+    const float NaNf = std::numeric_limits<float>::quiet_NaN();
+    std::vector<float> feat_range(want_csv ? n_points : 0, NaNf);
+    std::vector<std::vector<int>> feat_row(
+        want_csv ? n_levels : 0, std::vector<int>(n_points, -1));
+    std::vector<std::vector<int>> feat_col(
+        want_csv ? n_levels : 0, std::vector<int>(n_points, -1));
+    std::vector<std::vector<float>> feat_map_range(
+        want_csv ? n_levels : 0, std::vector<float>(n_points, NaNf));
+
+    // projectToPixel nhận góc bằng RADIAN (`range_image.hpp`), còn buildRangeImage nhận ĐỘ.
+    // Truyền nhầm đơn vị thì mọi điểm rớt ra ngoài FOV và CSV ra rỗng trơn, không báo lỗi.
+    const float v_min_rad = v_angle_min * static_cast<float>(M_PI) / 180.0f;
+    const float v_max_rad = v_angle_max * static_cast<float>(M_PI) / 180.0f;
+
     for (size_t li = 0; li < n_levels; ++li)
     {
         const int h = levels[li].height;
@@ -231,6 +262,24 @@ int main(int argc, char** argv)
             scan_frame.cloud, h, w, v_angle_min, v_angle_max, &scan_ground_mask);
         auto map_image = range_image::buildRangeImage(
             map_cloud, h, w, v_angle_min, v_angle_max, &map_ground_mask);
+
+        // Gom đặc trưng cho CSV. Đọc THẲNG từ map_image chứ KHÔNG lấy lại
+        // discrepancy_image: hàm đó dùng fabs() nên đã vứt mất DẤU của hiệu, mà dấu mang
+        // thông tin thật — dương = có vật gần hơn bản đồ (nghi động), âm = xa hơn bản đồ
+        // (che khuất, hoặc bản đồ thiếu dữ liệu). Xem mục 9.1 HANDOFF 01/09.
+        if (want_csv)
+        {
+            for (size_t i = 0; i < n_points; ++i)
+            {
+                auto px = range_image::projectToPixel(
+                    scan_frame.cloud->points[i], h, w, v_min_rad, v_max_rad);
+                if (!px.valid) continue;      // quá gần (<0.1m) hoặc ngoài FOV dọc
+                feat_range[i]         = px.distance;
+                feat_row[li][i]       = px.row;
+                feat_col[li][i]       = px.col;
+                feat_map_range[li][i] = map_image[px.row][px.col];
+            }
+        }
 
         auto discrepancy_image = discrepancy::computeDiscrepancy(scan_image, map_image, threshold);
 
@@ -343,6 +392,65 @@ int main(int argc, char** argv)
     std::cout << "  ứng viên sau REMOVE:        " << n_candidates << '\n';
     std::cout << "  bị REVERT (không xác nhận): " << n_reverted
               << " (" << (n_candidates ? 100.0 * n_reverted / n_candidates : 0.0) << "%)\n";
+
+    // === XUẤT CSV — dữ liệu huấn luyện cho tầng học máy (mục 3 HANDOFF 01/09) ===
+    // Hàm này chỉ GHI CHÉP, KHÔNG quyết định gì: mọi cột đều là thứ pipeline đã tính xong
+    // ở trên. Nó mà làm xê dịch bất kỳ con số nào thì đó là bug, không phải tính năng.
+    //
+    // MỘT DÒNG = MỘT ĐIỂM, không phải một cặp (điểm, thang). Lý do là chống rò rỉ dữ liệu:
+    // trải theo cặp thì mỗi điểm thành 4 dòng gần giống hệt nhau, chia train/test ngẫu
+    // nhiên sẽ đẩy 3 dòng sang tập học và 1 dòng sang tập kiểm tra. Mô hình trả lời đúng
+    // bằng TRÍ NHỚ chứ không phải hiểu biết, điểm kiểm tra đẹp giả, và không ai phát hiện
+    // ra cho tới khi con số đó đã nằm trong báo cáo.
+    //
+    // KHÔNG có cột `gt_label`: nhãn thật nằm trong file .label của SemanticKITTI, C++ không
+    // đọc định dạng đó. Ghép bằng Python theo `point_id` ở bước sau.
+    if (want_csv)
+    {
+        // baseline_label = phán quyết của NGƯỠNG ĐẶT TAY, tức baseline của đề tài.
+        // Điểm ground không bao giờ lọt vào final_dynamic_indices (bị `continue` trước
+        // vòng bỏ phiếu), nên chúng luôn mang nhãn 0 — không có giá trị thứ ba.
+        std::vector<unsigned char> baseline(n_points, 0);
+        for (int idx : final_dynamic_indices) baseline[idx] = 1;
+
+        std::ofstream csv(csv_path);
+        if (!csv) { std::cerr << "khong mo duoc file CSV: " << csv_path << '\n'; return 1; }
+
+        csv << "scan_id,point_id,x,y,z,range,is_ground";
+        for (size_t li = 0; li < n_levels; ++li)
+            csv << ",row_L" << li << ",col_L" << li
+                << ",range_map_L" << li << ",range_diff_L" << li;
+        for (size_t li = 0; li < n_levels; ++li) csv << ",observed_L" << li;
+        for (size_t li = 0; li < n_levels; ++li) csv << ",vote_L" << li;
+        csv << ",baseline_label\n";
+
+        csv << std::fixed << std::setprecision(3);
+        for (size_t i = 0; i < n_points; ++i)
+        {
+            const auto& p = scan_frame.cloud->points[i];
+            csv << scan_idx << ',' << i << ','
+                << p.x << ',' << p.y << ',' << p.z << ',';
+            if (std::isfinite(feat_range[i])) csv << feat_range[i];
+            csv << ',' << (scan_ground_mask[i] ? 1 : 0);
+
+            for (size_t li = 0; li < n_levels; ++li)
+            {
+                csv << ',' << feat_row[li][i] << ',' << feat_col[li][i] << ',';
+                // Ô TRỐNG khi bản đồ không có dữ liệu tại pixel đó (sentinel infinity của
+                // buildRangeImage) hoặc điểm không chiếu được. pandas đọc ô trống thành
+                // NaN; ghi chữ "inf" thì numpy nuốt vào rồi phá mọi phép trung bình sau này.
+                const float mr = feat_map_range[li][i];
+                if (std::isfinite(mr)) csv << mr << ',' << (mr - feat_range[i]);
+                else                   csv << ',';
+            }
+            for (size_t li = 0; li < n_levels; ++li) csv << ',' << observed_count[li][i];
+            for (size_t li = 0; li < n_levels; ++li) csv << ',' << vote_count[li][i];
+            csv << ',' << static_cast<int>(baseline[i]) << '\n';
+        }
+        csv.close();
+        std::cout << "Đã ghi CSV: " << csv_path << " — " << n_points << " dòng × "
+                  << (8 + n_levels * 6) << " cột\n";
+    }
 
     std::string out_path = "dynamic_indices_scan" + std::to_string(scan_idx) + ".txt";
     std::ofstream out_file(out_path);
