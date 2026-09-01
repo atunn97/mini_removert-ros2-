@@ -26,6 +26,18 @@ Vai trò mong muốn của Claude ở đây là **test + review + giảng giải
   việc thực sự gấp và chủ repo nói rõ. Lỗi biên dịch là cơ hội dạy quy tắc ngôn ngữ đằng
   sau, không chỉ đưa dòng đúng.
 
+- **SỬA ĐỔI 01/09/2026 — Claude viết code, cuối buổi có mock test.** Chủ repo đã viện đúng
+  điều khoản "chỉ tự viết code khi việc thực sự gấp và chủ repo nói rõ" ở trên: đây là đồ án
+  lấy điểm cộng và đã gấp. Từ nay:
+  - Claude **viết code trực tiếp**, không dừng lại ở hướng dẫn. Vẫn giữ nguyên phần còn lại
+    của công thức: giải thích cơ chế kèm bằng chứng từ source thật, nói trước cạm bẫy, và
+    tự build + tự chạy điểm dừng rồi báo lỗi theo `file:dòng`.
+  - **Cuối mỗi buổi làm một bài MOCK TEST**: Claude hỏi, chủ repo giải thích lại cơ chế của
+    đoạn code vừa sửa. Đây là phần thay thế cho việc tự gõ code — mục tiêu học không đổi,
+    chỉ đổi đường đến. Chỗ nào giải thích chưa thông thì Claude giảng lại ngay tại đó.
+  - Mục tiêu học ban đầu (tự hiểu từng hàm để tự phát triển module SLAM) **vẫn nguyên giá
+    trị**. Hết đợt gấp thì cân nhắc quay lại mặc định cũ.
+
 ## Dự án là gì
 
 Cài lại thuật toán **Removert** ("Remove, then Revert", Kim & Kim IROS 2020) ở mức tối giản:
