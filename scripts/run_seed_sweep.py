@@ -29,8 +29,8 @@ D = os.path.expanduser('~/kitti_data/dataset')
 BINARY = f'{REPO}/build/mini_removert/mini_removert'
 
 THRESHOLD = '1.0'                       # mốc chốt 13/8
-N_MAPS = '4'
-MAX_DIST = '4.0'
+RUNGS   = '5:5,10:10,20:10'
+MIN_SRC = '8'
 DEFAULT_SCANS = [50, 100, 150, 200, 250]        # ĐÚNG bộ 5 scan của mốc 0.720/0.691
 DEFAULT_SEEDS = [0, 1, 2, 3, 4, 5]
 
@@ -38,9 +38,9 @@ DEFAULT_SEEDS = [0, 1, 2, 3, 4, 5]
 def select_maps(seq, scan):
     """Gọi select_maps_by_distance.py; map_idx nằm ở DÒNG CUỐI stdout."""
     sel = subprocess.run(
-        ['python3', f'{REPO}/scripts/select_maps_by_distance.py',
-         f'{D}/poses/{seq}.txt', f'{D}/sequences/{seq}/calib.txt',
-         str(scan), N_MAPS, MAX_DIST],
+            ['python3', f'{REPO}/scripts/select_source_ladder.py',
+            f'{D}/poses/{seq}.txt', f'{D}/sequences/{seq}/calib.txt',
+            str(scan), '--rungs', RUNGS, '--min-src', MIN_SRC],
         capture_output=True, text=True)
     if sel.returncode != 0:
         return None
