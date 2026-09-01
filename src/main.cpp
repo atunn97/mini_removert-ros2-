@@ -131,12 +131,23 @@ int main(int argc, char** argv)
     std::vector<std::vector<int>> vote_count(n_levels, std::vector<int>(n_points, 0));
     std::vector<std::vector<int>> observed_count(n_levels, std::vector<int>(n_points, 0));
 
-    // Ground mask của scan: tính MỘT LẦN ngoài vòng lặp, không tính lại mỗi map.
-    // Ground membership bất biến qua phép biến đổi cứng (phép quay/tịnh tiến bảo toàn
-    // khoảng cách điểm→mặt phẳng), nên mask trên scan_frame.cloud và trên
-    // scan_in_map_frame là như nhau — tính lại mỗi vòng vừa thừa vừa gây thiếu nhất
-    // quán (RANSAC có yếu tố ngẫu nhiên). Thứ tự điểm không đổi nên index vẫn khớp.
-    auto scan_ground_mask = ground_filter::detectGroundMask(scan_frame.cloud, ground_seed);
+    // Ground mask của scan: tính MỘT LẦN, dùng cho mọi thang phân giải.
+    // Sau E2 việc 4 thì scan GIỮ NGUYÊN hệ của nó, nên mask này áp thẳng lên
+    // `scan_frame.cloud` — không còn bản `scan_in_map_frame` nào để phải giữ nhất quán.
+    // (Ghi chú cũ vẫn đúng nhưng giờ không cần tới: ground membership bất biến qua phép
+    // biến đổi cứng, vì quay/tịnh tiến bảo toàn khoảng cách điểm→mặt phẳng.)
+    //
+    // E2 VIỆC 3: fit mặt phẳng MỘT LẦN trên scan, rồi dùng CHUNG hệ số đó cho cả hai cloud.
+    // Trước đây scan và map mỗi bên chạy một lần RANSAC riêng ⇒ ra hai mặt phẳng khác nhau
+    // ⇒ một điểm mặt đường bị loại khỏi ảnh này mà còn nguyên ở ảnh kia ⇒ sinh chênh lệch
+    // range GIẢ ⇒ false positive hàng loạt.
+    //
+    // Vì sao dùng thẳng được hệ số của scan cho map, không phải biến đổi mặt phẳng:
+    // `map_cloud` ĐÃ ở hệ scan (đưa về từ bước gộp, `relative_pose` = scan⁻¹·map). Cùng hệ
+    // toạ độ thì cùng phương trình mặt phẳng — "đề bài C" tự tan biến.
+    const Eigen::Vector4f ground_plane =
+        ground_filter::detectGroundPlane(scan_frame.cloud, ground_seed);
+    auto scan_ground_mask = ground_filter::maskFromPlane(scan_frame.cloud, ground_plane);
     // DEBUG: kích cỡ ground mask — dùng để chấm `--ground-seed` (mốc seq04 ~50%, mục 3.1
     // phiên 12/8). In CẢ số đếm lẫn phần trăm: số đếm là bằng chứng gốc, còn phần trăm mới
     // là thứ so sánh được giữa các scan (5 scan mốc lệch nhau tới 1.455 điểm) và giữa các
@@ -156,40 +167,6 @@ int main(int argc, char** argv)
         Eigen::Matrix4f relative_pose = scan_frame.pose.inverse() * map_frame.pose;
         auto map_in_scan = transform::transformPointCloud(map_frame.cloud, relative_pose);
         *accumulated += *map_in_scan;
-        auto scan_in_map_frame = transform::transformPointCloud(scan_frame.cloud, relative_pose);
-
-        auto map_ground_mask = ground_filter::detectGroundMask(map_frame.cloud, ground_seed);
-
-        // Map đã load + transform + fit ground ở trên rồi, giờ dùng lại cho MỌI thang
-        // phân giải (ground mask không phụ thuộc độ phân giải). Rẻ hơn hẳn so với
-        // chạy lại toàn bộ pipeline một lần cho mỗi thang.
-        for (size_t li = 0; li < n_levels; ++li)
-        {
-            const int h = levels[li].height;
-            const int w = levels[li].width;
-
-            auto scan_image = range_image::buildRangeImage(
-                scan_in_map_frame, h, w, v_angle_min, v_angle_max, &scan_ground_mask);
-            auto map_image = range_image::buildRangeImage(
-                map_frame.cloud, h, w, v_angle_min, v_angle_max, &map_ground_mask);
-
-            auto discrepancy_image = discrepancy::computeDiscrepancy(scan_image, map_image, threshold);
-
-            auto dynamic_indices = filter::getDynamicIndices(
-                scan_in_map_frame, discrepancy_image, h, w, v_angle_min, v_angle_max);
-
-            auto observed_indices = filter::getObservedIndices(
-                scan_in_map_frame, map_image, h, w, v_angle_min, v_angle_max);
-
-            for (int idx : dynamic_indices)
-                vote_count[li][idx]++;
-            for (int idx : observed_indices)
-                observed_count[li][idx]++;
-
-            std::cout << "  vs map[" << map_idx << "] @" << levels[li].name << ": "
-                      << dynamic_indices.size() << " dynamic candidates, "
-                      << observed_indices.size() << " observed\n";
-        }
     }
     // === VOXEL: đưa map tích luỹ về mật độ trần đồng đều (đề bài E2, mục 9 việc 2) ===
     // Mỗi ô lập phương 0.2m chỉ giữ lại MỘT điểm = trọng tâm các điểm rơi vào ô đó.
@@ -219,13 +196,73 @@ int main(int argc, char** argv)
               << "  -> sau voxel " << VOXEL_LEAF_M << "m: " << map_cloud->points.size()
               << " diem (con " << 100.0 * map_cloud->points.size() / accumulated->points.size()
               << "%)\n";
+    // Ground mask của MAP TÍCH LUỸ — E2 việc 3: KHÔNG chạy RANSAC lần hai ở đây, mà áp lại
+    // đúng `ground_plane` đã fit trên scan. Đó chính là điểm mấu chốt của việc 3: hai ảnh
+    // phải đi qua CÙNG một mặt phẳng thì phần mặt đường mới triệt tiêu lẫn nhau.
+    //
+    // Mask vẫn phải tính trên `map_cloud` (bản đã gộp + voxel), không phải trên một frame
+    // nguồn lẻ: `buildRangeImage` đọc `(*exclude_mask)[i]` mà `std::vector<bool>::operator[]`
+    // KHÔNG kiểm biên (`range_image.cpp:56`), nên mask lệch kích cỡ so với cloud là hành vi
+    // không xác định — thường KHÔNG crash, chỉ lặng lẽ cho ra số sai.
+    auto map_ground_mask = ground_filter::maskFromPlane(map_cloud, ground_plane);
+
+    // DEBUG: tỷ lệ ground của MAP, đối chiếu với tỷ lệ ground của SCAN in ở trên. Sau việc 3
+    // hai bên dùng CHUNG một mặt phẳng, nên hai tỷ lệ lệch nhau nhiều là tín hiệu đáng đọc:
+    // map tích luỹ trải dài hơn scan nên mặt đường của nó cong đi khỏi mặt phẳng fit tại chỗ
+    // của scan, phần cong ra ngoài 0.2m sẽ KHÔNG bị loại và đi thẳng vào range image.
+    const auto n_map_ground = std::count(map_ground_mask.begin(), map_ground_mask.end(), true);
+    std::cout << "ground cua map tich luy: " << n_map_ground << "/" << map_cloud->points.size()
+              << " diem (" << 100.0f * n_map_ground / map_cloud->points.size() << "%)\n";
+
+    // Giờ chỉ còn MỘT map (bản tích luỹ), nên mỗi thang phân giải chỉ có MỘT lượt so sánh,
+    // thay vì một lượt cho mỗi map nguồn như trước. Ground mask không phụ thuộc độ phân
+    // giải nên đã tính một lần ở trên, dùng lại cho mọi thang.
+    //
+    // Cả hai ảnh giờ cùng nằm trong HỆ SCAN: `scan_frame.cloud` là hệ gốc của scan, còn
+    // `map_cloud` đã được đưa về hệ scan ngay ở bước gộp (`relative_pose` = scan⁻¹·map).
+    // Đây đúng là chỗ bug cũ nằm: `scan_in_map_frame` đem phép "map → scan" áp lên chính
+    // scan, tức áp nghịch đảo của thứ cần áp, nên hai ảnh ở hai hệ chẳng liên quan.
+    for (size_t li = 0; li < n_levels; ++li)
+    {
+        const int h = levels[li].height;
+        const int w = levels[li].width;
+
+        auto scan_image = range_image::buildRangeImage(
+            scan_frame.cloud, h, w, v_angle_min, v_angle_max, &scan_ground_mask);
+        auto map_image = range_image::buildRangeImage(
+            map_cloud, h, w, v_angle_min, v_angle_max, &map_ground_mask);
+
+        auto discrepancy_image = discrepancy::computeDiscrepancy(scan_image, map_image, threshold);
+
+        auto dynamic_indices = filter::getDynamicIndices(
+            scan_frame.cloud, discrepancy_image, h, w, v_angle_min, v_angle_max);
+
+        auto observed_indices = filter::getObservedIndices(
+            scan_frame.cloud, map_image, h, w, v_angle_min, v_angle_max);
+
+        for (int idx : dynamic_indices)
+            vote_count[li][idx]++;
+        for (int idx : observed_indices)
+            observed_count[li][idx]++;
+
+        // `map_idx` đã ra khỏi phạm vi cùng vòng gộp. In số NGUỒN đã gộp thay cho một chỉ
+        // số lẻ, vì từ đây trở đi chỉ còn một map duy nhất.
+        std::cout << "  vs map tich luy (" << map_indices.size() << " nguon) @"
+                  << levels[li].name << ": "
+                  << dynamic_indices.size() << " dynamic candidates, "
+                  << observed_indices.size() << " observed\n";
+    }
 
     // ---- DEBUG sanity-check observed_count, giờ theo TỪNG thang phân giải ----
     // (mẫu số voting phải hợp lý ở mọi thang: không được toàn 0 hoặc toàn N)
     {
-        int n_maps = static_cast<int>(map_indices.size());
+        // Mẫu số giờ là SỐ LƯỢT SO SÁNH chứ không phải số frame nguồn: sau E2 mọi nguồn
+        // đã gộp thành một map duy nhất nên mỗi thang chỉ có 1 lượt. Để nguyên
+        // `map_indices.size()` thì `count==N` luôn in 0% và trông y như pipeline hỏng.
+        const int n_maps = 1;
         std::cout << "\n[DEBUG] observed_count stats over " << n_points
-                  << " points (N=" << n_maps << " maps):\n";
+                  << " points (N=" << n_maps << " luot so sanh, tu "
+                  << map_indices.size() << " nguon da gop):\n";
         for (size_t li = 0; li < n_levels; ++li)
         {
             int min_obs = n_maps, max_obs = 0;
