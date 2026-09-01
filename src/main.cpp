@@ -6,6 +6,7 @@
 #include "filter/filter.hpp"
 #include "transform/transform.hpp"
 #include "ground_filter/ground_filter.hpp"
+#include <pcl/filters/voxel_grid.h>
 
 #include <cmath>
 #include <iomanip>
@@ -85,6 +86,11 @@ int main(int argc, char** argv)
     constexpr float v_angle_min = -24.8f;
     constexpr float v_angle_max = 2.0f;
 
+    // Cạnh ô voxel cho map tích luỹ (đề bài E2). 0.2m là giá trị đã dùng xuyên suốt phép
+    // đo bộ nguồn (`scripts/src_quality.py`, VOXEL = 0.2), nên đổi số này là mọi mốc AUC
+    // của HANDOFF_2026-08-20 hết đối chiếu được.
+    constexpr float VOXEL_LEAF_M = 0.2f;
+
     // === Multi-resolution: nền tảng của "remove, then revert" (Removert gốc) ===
     // Thang MỊN thì nhạy (bắt gần hết vật động thật) nhưng nhiều báo nhầm: lệch
     // viewpoint nhỏ hoặc bề mặt xốp (tán lá) làm 2 pixel cùng vị trí trúng 2 bề mặt
@@ -139,6 +145,7 @@ int main(int argc, char** argv)
     const size_t n_scan_points = scan_frame.cloud->points.size();
     std::cout << "ground seed=" << ground_seed << ": " << n_ground << "/" << n_scan_points
               << " diem (" << 100.0f * n_ground / n_scan_points << "%)\n";
+    pcl::PointCloud<pcl::PointXYZ>::Ptr accumulated(new pcl::PointCloud<pcl::PointXYZ>);        
     for (int map_idx : map_indices)
     {
         snprintf(buf, sizeof(buf), "%06d.pcd", map_idx);
@@ -146,7 +153,9 @@ int main(int argc, char** argv)
         Eigen::Matrix4f map_pose = poses[map_idx] * Tr;
         Frame map_frame = loadFrame(map_path, map_pose, 0.0);
 
-        Eigen::Matrix4f relative_pose = map_frame.pose.inverse() * scan_frame.pose;
+        Eigen::Matrix4f relative_pose = scan_frame.pose.inverse() * map_frame.pose;
+        auto map_in_scan = transform::transformPointCloud(map_frame.cloud, relative_pose);
+        *accumulated += *map_in_scan;
         auto scan_in_map_frame = transform::transformPointCloud(scan_frame.cloud, relative_pose);
 
         auto map_ground_mask = ground_filter::detectGroundMask(map_frame.cloud, ground_seed);
@@ -182,6 +191,34 @@ int main(int argc, char** argv)
                       << observed_indices.size() << " observed\n";
         }
     }
+    // === VOXEL: đưa map tích luỹ về mật độ trần đồng đều (đề bài E2, mục 9 việc 2) ===
+    // Mỗi ô lập phương 0.2m chỉ giữ lại MỘT điểm = trọng tâm các điểm rơi vào ô đó.
+    // Không phải để chạy nhanh: 9 frame chụp cùng một chỗ làm map dày gấp 9 lần scan,
+    // mà range image lấy min(range) mỗi pixel nên map dày bất thường sẽ chiếm pixel theo
+    // cách scan không thể. Đây là nguyên lý 3 — hai ảnh phải đi qua CÙNG một phép rút gọn.
+    //
+    // Voxel phải chạy SAU khi gom đủ mọi nguồn. Voxel từng frame rồi mới nối thì 9 điểm
+    // gần trùng nhau vẫn sống sót vì chúng nằm ở 9 cloud khác nhau, không ô nào gộp được.
+    //
+    // Trọng tâm (không phải "điểm đại diện") là điều kiện để đối chiếu được với
+    // scripts/src_quality.py — voxel_downsample() bên đó cũng lấy trọng tâm.
+    pcl::PointCloud<pcl::PointXYZ>::Ptr map_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::VoxelGrid<pcl::PointXYZ> voxel;
+    voxel.setInputCloud(accumulated);
+    voxel.setLeafSize(VOXEL_LEAF_M, VOXEL_LEAF_M, VOXEL_LEAF_M);
+    voxel.filter(*map_cloud);
+
+    // In CẢ hai số: tỷ lệ co lại mới là phép kiểm, không phải con số tuyệt đối.
+    // Mốc đối chiếu seq04/150 với 9 nguồn (src_quality.py): 1.141.089 -> ~118.575.
+    //   còn vài trăm nghìn  -> sai CHIỀU biến đổi ở bước gộp: các frame văng lệch nhau
+    //                          nên ít điểm rơi trùng ô. Số ở bước gộp MÙ với lỗi này.
+    //   không giảm chút nào -> xem stderr: PCL_WARN "Leaf size is too small" thì VoxelGrid
+    //                          đã trả nguyên cloud gốc (voxel_grid.hpp:255-257), không rỗng.
+    std::cout << "map tich luy: " << accumulated->points.size() << " diem tu "
+              << map_indices.size() << " nguon"
+              << "  -> sau voxel " << VOXEL_LEAF_M << "m: " << map_cloud->points.size()
+              << " diem (con " << 100.0 * map_cloud->points.size() / accumulated->points.size()
+              << "%)\n";
 
     // ---- DEBUG sanity-check observed_count, giờ theo TỪNG thang phân giải ----
     // (mẫu số voting phải hợp lý ở mọi thang: không được toàn 0 hoặc toàn N)

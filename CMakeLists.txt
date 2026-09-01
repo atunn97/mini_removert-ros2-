@@ -5,7 +5,10 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-find_package(PCL REQUIRED COMPONENTS common io segmentation)
+# `filters` cho pcl::VoxelGrid (đề bài E2, voxel 0.2m trên cloud gộp). Thiếu component
+# này thì lỗi hiện ra lúc LINK (undefined reference to pcl::VoxelGrid<...>::applyFilter),
+# không phải lúc biên dịch — dễ đi tìm nhầm chỗ.
+find_package(PCL REQUIRED COMPONENTS common io segmentation filters)
 
 include_directories(${PCL_INCLUDE_DIRS})
 add_definitions(${PCL_DEFINITIONS})
