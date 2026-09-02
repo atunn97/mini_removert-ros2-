@@ -70,10 +70,6 @@ Testing/
 # colcon (ROS2) generated directories
 install/
 log/
-echo "" >> .gitignore
-echo "# ket qua chay N-sweep - tai tao duoc bang script, khong commit" >> .gitignore
-echo "results_n_sweep/" >> .gitignore
-echo "results_n_sweep_v2/" >> .gitignore
 # ket qua chay N-sweep - tai tao duoc bang script, khong commit
 results_n_sweep/
 results_n_sweep_v2/
@@ -87,3 +83,7 @@ results_threshold_sweep/
 
 # Output cua binary: ghi ra CWD moi lan chay, tai tao duoc bang script
 dynamic_indices_scan*.txt
+
+# CSV dac trung cho tang hoc may: ~15MB moi scan, tai tao duoc bang
+# `--csv` cua binary + scripts/add_gt_label.py. Khong commit.
+*.csv
