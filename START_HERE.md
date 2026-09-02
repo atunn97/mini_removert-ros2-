@@ -6,36 +6,43 @@
 
 ---
 
-## 🔴 HÔM NAY (cập nhật 01/09/2026)
+## 🔴 HÔM NAY (cập nhật **02/09/2026**, cuối phiên Linux)
 
-**Trạng thái:** E2 việc 3 + 4 xong, build sạch, binary cho số ĐỌC ĐƯỢC. Đã commit (`cec4f2c`, `8f0043c`).
+**Trạng thái:** mục 15.9 **ĐÃ ĐÓNG** — ba bảng khám nghiệm FP chạy xong, kết luận có bằng chứng số.
+Toàn bộ chi tiết: **`HANDOFF_2026-09-02.md`**. Không đụng một dòng C++ nào trong phiên.
 
-**Câu hỏi mở duy nhất — precision quá tệ, FP ở đâu ra?**
+**✅ Câu hỏi mở "FP ở đâu ra?" — đã trả lời:**
 
-```
-seq04/150:  P 0.208   R 0.814   F1 0.332      301 TP / 1144 FP
-seq06/349:  P 0.032   R 0.546   F1 0.061      100 TP / 3013 FP
-seq06/939:  P 0.062   R 0.782   F1 0.115      140 TP / 2110 FP
-```
+> FP chủ yếu từ **ĐƯỜNG ỐNG**, và **tách được theo cự ly**: ngoài 40 m là hình học/mật độ (41% FP,
+> lệch âm trung vị 8,5 m) · 20–40 m là luật quyết định (25% FP, lệch trung vị 1,2 m) · dưới 20 m
+> (34% FP) còn hỗn hợp, **chưa gọi tên sạch**.
 
-Recall ổn — nó **tìm được** vật động. Precision sụp — nó vơ kèm quá nhiều thứ tĩnh.
+Ba kết quả phụ, đều quan trọng:
 
-**Manh mối cũ ĐÃ CHẾT:** chênh lệch ground 49.8% (scan) vs 38.3% (map) hoá ra **lành tính** —
-chỉ do scan và map lấy mẫu ở phân bố bán kính khác nhau (mục 13.2 handoff). Map không bỏ sót
-mặt đường của nó.
+- **REVERT hoàn toàn lành mạnh** — giết 12.364 ứng viên, **không mất một TP nào** (301/301 sống sót).
+  Cả 69 FN đều mất ở bước **REMOVE**, không phải do revert quá tay. Tỉ lệ REVERT 89,5% hết đáng nghi.
+- **Trong vành 20–40 m, baseline đạt P = 0,516** — ngưỡng đặt tay không hề đặt sai chỗ, nó chỉ chết
+  ở hai đầu cự ly.
+- **TP có trung vị |lệch| = 15 m** trong khi ngưỡng đặt ở 0,5 m. Luận điểm đề tài ở dạng số.
 
-❌ **Đã bác bỏ bằng số, đừng đi lại:**
-- "hai mặt phẳng RANSAC riêng gây FP" — đã hợp nhất ở việc 3, số không đổi
-- "mặt đường cong ra khỏi mặt phẳng" — `R` ra ÂM ở seq06, `R²`=0.26, vách dự báo 76m mà vách
-  thật ở 10-20m
+**⭐ Việc đầu tiên của phiên tới (đụng C++):** cắt bán kính **40 m** vào baseline — bỏ 471 FP, mất 1 TP,
+dự kiến P 0,208 → **0,308**, F1 0,332 → **0,446**. Không phải tune ngưỡng: removert gốc vốn có giới hạn
+bán kính. Đo lại cả ba mốc rồi mới đi bước 3. Xem `HANDOFF_2026-09-02.md` mục 7.
 
-**Nghi phạm tiếp theo, chưa thử:** ngoài 30m, scan có 5.783 điểm còn map có **38.869 — gấp
-6.7 lần**. `getObservedIndices` coi một điểm scan là "quan sát được" khi map CÓ dữ liệu tại
-pixel đó. Vùng xa là nơi map dày đặc mà scan gần như không lấy mẫu nổi, và 9 điểm nhìn cách
-nhau chục mét thì ở 60-80m chúng thấy những bề mặt khác nhau. Xem mục 13.4.
+❌ **Đã bác bỏ bằng số, đừng đi lại** (danh sách đầy đủ ở cuối `CHECKLIST-15.9-FP.md`):
+- "hai mặt phẳng RANSAC riêng gây FP" · "mặt đường cong" · chênh lệch ground 49,8/38,3%
+- ⭐ **bỏ `fabs()` (luật một chiều)** — bác bỏ lần 3 ngày 02/09: dưới bộ nguồn mới (±10–14 frame),
+  luật một chiều giữ lại **0/301 TP**. Nguồn xa hơn về thời gian làm vệt vật động dịch **mạnh hơn**
+  về phía âm, không hề sạch hơn. **Cấm đụng, vĩnh viễn.**
 
-**Mạch CSV:** bước 1 (C++ `--csv`) và bước 2 (`add_gt_label.py`) ✅ xong. Còn bước 3 (chạy
-nhiều scan, nối lại) và bước 4 (MLP numpy). Xem mục 14.
+**Mạch CSV:** bước 1 + 2 ✅. Còn bước 3 (nối nhiều scan) và bước 4 (MLP numpy). Xem mục 14 handoff 01/09.
+
+**Chưa làm, còn nợ:** 391 FP vùng <20 m chưa gọi tên cơ chế · bag `standstill_*` (mục 15.2, nửa buổi
+riêng, quân bài rẻ nhất chưa lật) · `scripts/viz_scan.py` · **đồng bộ tài liệu ổ D sang repo** (repo
+đang thiếu hẳn mục 15 của handoff 01/09).
+
+> ⚠️ **Môi trường:** `python3` hệ thống **KHÔNG có pandas**. Dùng `~/pointcloud_env/bin/python`
+> (pandas 3.0.3 + matplotlib 3.10.9). `add_gt_label.py` chỉ cần numpy nên `python3` thường vẫn chạy.
 
 ---
 
@@ -75,20 +82,21 @@ Thầy và hội đồng hỏi cột này. Không ai hỏi cú pháp CMake hay `
    thô xác nhận (F1 0.630) chứ không phải *một* thang (0.492).
 3. **Range image** — vì sao chiếu 3D xuống 2D, vì sao mỗi pixel lấy `min(range)`.
 4. **Vì sao phải có baseline** — xem trên.
-5. **FP đến từ đâu** — câu hỏi mở hiện tại.
+5. **FP đến từ đâu** — đã trả lời 02/09: đường ống ở >40 m, luật quyết định ở 20–40 m,
+   vùng <20 m còn hỗn hợp. Xem `HANDOFF_2026-09-02.md`.
 
 ## Đọc log: con số nào nghĩa là gì
 
 | Thấy gì | Nghĩa |
 |---|---|
 | `ground seed=0` ≈ **49.75%** (seq04/150) | bình thường. Lệch nhiều ⇒ ground filter có chuyện |
-| `ground cua map` vs `ground cua scan` | lệch nhiều ⇒ manh mối HÔM NAY |
+| `ground cua map` **38,3%** vs `ground cua scan` **49,8%** | **lành tính**, chỉ do phân bố bán kính (mục 13.2). Đừng đi lại |
 | seq04/150 gộp **1.141.089 → 118.574** | khớp mốc. Sai ⇒ bước gộp/voxel hỏng |
 | seq06/939 gộp **993.711 → 133.939** | khớp mốc |
 | `observed_count` `min=0 max=1` | đúng sau việc 4. Thấy `max=9` ⇒ còn vòng lặp map cũ |
 | **ΔF1 < 0.07** trên 1 ground mask | ⛔ **KHÔNG kết luận được gì.** Cần `run_seed_sweep.py` |
 | seq06/349 hoặc 06/939 **= 0.000** | ⛔ lỗi CÀI ĐẶT, không phải ý tưởng sai |
-| REVERT ~80-90% | hiện tại là vậy. Đáng nghi, chưa điều tra |
+| REVERT ~80-90% | **bình thường, đã điều tra 02/09**: giết 12.364 ứng viên, mất **0** TP |
 | Kết quả lạ bất kỳ | **xem `#nguồn` và `observed_count` TRƯỚC TIÊN** |
 
 ## Ba lệnh để tự chạy
