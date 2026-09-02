@@ -25,9 +25,19 @@ Ba kết quả phụ, đều quan trọng:
   ở hai đầu cự ly.
 - **TP có trung vị |lệch| = 15 m** trong khi ngưỡng đặt ở 0,5 m. Luận điểm đề tài ở dạng số.
 
+**⭐ Phát hiện cuối phiên, đáng giá ngang ba bảng:** cả **65 FN** không-ground đều mất vì **map MÙ
+ở thang mịn** (`observed_L0 = 0`), **không** phải vì lệch dưới ngưỡng — 0 điểm nào lệch yếu. Ở thang
+thô chúng lệch **13,7–15,3 m**, 100% trên 2 m, mạnh ngang TP. Gốc rễ: map gộp+voxel chỉ lấp được
+**57,5%** số pixel ở 64×900 (mù 42,5%; L1 17,3% · L2 11,2% · L3 9,5%), mà REMOVE chỉ chạy ở L0.
+Đây là **giới hạn cấu trúc**, không ngưỡng nào cứu được — và là lập luận **kiến trúc** cho hướng học
+máy. ⚠️ Kèm một cái bẫy: *"vậy REMOVE ở L1 là xong, cần gì ML?"* — 51/65 điểm sẽ được cứu. Phải đo
+`REMOVE@L1` như một baseline biến thể. Xem `HANDOFF_2026-09-02.md` mục 10.
+
 **⭐ Việc đầu tiên của phiên tới (đụng C++):** cắt bán kính **40 m** vào baseline — bỏ 471 FP, mất 1 TP,
 dự kiến P 0,208 → **0,308**, F1 0,332 → **0,446**. Không phải tune ngưỡng: removert gốc vốn có giới hạn
 bán kính. Đo lại cả ba mốc rồi mới đi bước 3. Xem `HANDOFF_2026-09-02.md` mục 7.
+Kèm theo: đo `REMOVE@L1` (mục 10.6) và kiểm tỉ lệ map mù trên seq06 — **rất có thể đó là lời giải
+cho F1 0,061 của seq06/349**.
 
 ❌ **Đã bác bỏ bằng số, đừng đi lại** (danh sách đầy đủ ở cuối `CHECKLIST-15.9-FP.md`):
 - "hai mặt phẳng RANSAC riêng gây FP" · "mặt đường cong" · chênh lệch ground 49,8/38,3%
